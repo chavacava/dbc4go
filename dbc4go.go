@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"dbc4go/astutils"
 	"flag"
 	"fmt"
 	"go/ast"
@@ -12,6 +11,8 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
+
+	"github.com/chavacava/dbc4go/astutils"
 )
 
 const (
