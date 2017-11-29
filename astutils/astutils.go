@@ -72,3 +72,14 @@ func NewStmtBlock(stmts ...ast.Stmt) *ast.BlockStmt {
 	stmtList := append([]ast.Stmt{}, stmts...)
 	return &ast.BlockStmt{Lbrace: 0, List: stmtList, Rbrace: 0}
 }
+
+// NewFuncDecl yilds a new function declaration
+func NewFuncDecl(name string, formalParams *ast.FieldList, body *ast.BlockStmt) *ast.FuncDecl {
+	return &ast.FuncDecl{
+		nil,
+		formalParams,
+		&ast.Ident{token.NoPos, name, nil},
+		&ast.FuncType{token.NoPos, formalParams, nil},
+		body,
+	}
+}
