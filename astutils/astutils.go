@@ -76,10 +76,29 @@ func NewStmtBlock(stmts ...ast.Stmt) *ast.BlockStmt {
 // NewFuncDecl yilds a new function declaration
 func NewFuncDecl(name string, formalParams *ast.FieldList, body *ast.BlockStmt) *ast.FuncDecl {
 	return &ast.FuncDecl{
-		nil,
-		formalParams,
-		&ast.Ident{token.NoPos, name, nil},
-		&ast.FuncType{token.NoPos, formalParams, nil},
-		body,
+		Doc:  nil,
+		Recv: formalParams,
+		Name: &ast.Ident{NamePos: 0, Name: name, Obj: nil},
+		Type: &ast.FuncType{Func: 0, Params: formalParams, Results: nil},
+		Body: body,
+	}
+}
+
+// NewDeferStmt yilds a new defer statement
+func NewDeferStmt(functionCall *ast.CallExpr) *ast.DeferStmt {
+	return &ast.DeferStmt{
+		Defer: 0,
+		Call:  functionCall,
+	}
+}
+
+// NewCallExpr yilds a new function call expression
+func NewCallExpr(function *ast.Expr, params []ast.Expr) *ast.CallExpr {
+	return &ast.CallExpr{
+		Fun:      *function,
+		Lparen:   0,
+		Args:     params,
+		Ellipsis: token.NoPos,
+		Rparen:   0,
 	}
 }
