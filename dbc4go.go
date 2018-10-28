@@ -10,14 +10,10 @@ import (
 	"go/token"
 	"io/ioutil"
 	"log"
-	"strings"
+	"strconv"
 
-	"github.com/chavacava/dbc4go/astutils"
-)
-
-const (
-	requiresNonil = iota
-	requiresExp   = iota
+	"github.com/chavacava/dbc4go/contract"
+	"github.com/fatih/astrewrite"
 )
 
 func main() {
@@ -36,6 +32,7 @@ func main() {
 	}
 
 	fmt.Printf("%s", buf.Bytes())
+	_ = buf
 }
 
 func analyzeCode(src []byte, fileName string) (bytes.Buffer, error) {
@@ -45,120 +42,64 @@ func analyzeCode(src []byte, fileName string) (bytes.Buffer, error) {
 		return bytes.Buffer{}, fmt.Errorf("could not parse input code: %v", err)
 	}
 
-	var genError error
-	ast.Inspect(file, func(x ast.Node) bool {
-		s, ok := x.(*ast.FuncDecl)
-		if !ok {
-			return true
-		}
-		if contracts := getContractComments(s.Doc.Text()); len(contracts) > 0 {
-			log.Printf("Function %s has %d contracts\n", s.Name, len(contracts))
-			for _, c := range contracts {
-				err := generateContractCode(c, s)
-				if err != nil {
-					genError = err
-					return true
-				}
-			}
-		}
-		return false
-	})
-
-	if genError != nil {
-		return bytes.Buffer{}, genError
-	}
+	fr := fileRewriter{fset: fset}
+	newFile := astrewrite.Walk(file, fr.rewrite)
 
 	var buf bytes.Buffer
-	if err := format.Node(&buf, fset, file); err != nil {
+	if err := format.Node(&buf, fset, newFile); err != nil {
 		return bytes.Buffer{}, fmt.Errorf("could not format the new code: %v", err)
 	}
 
 	return buf, nil
 }
 
-func getContractComments(c string) []string {
-	result := []string{}
-	for _, line := range strings.Split(strings.TrimSuffix(c, "\n"), "\n") {
-		if strings.HasPrefix(line, "@") {
-			result = append(result, line)
-		}
-	}
-	return result
+type fileRewriter struct {
+	fset *token.FileSet
 }
 
-func generateContractCode(c string, f *ast.FuncDecl) error {
-	ctype, err := getContractType(c)
-	if err != nil {
-		return fmt.Errorf("could not generate contract code for '%s': %v", c, err)
+// rewrite rewrites an AST node
+// this function is to be used with astrewrite.Walk
+func (fr *fileRewriter) rewrite(node ast.Node) (ast.Node, bool) {
+	switch n := node.(type) {
+	case *ast.FuncDecl:
+		fd, cont := fr.rewriteFuncDecl(n)
+		return fd, cont
 	}
 
-	switch ctype {
-	case requiresNonil:
-		checks := []ast.Stmt{}
-		for _, id := range getFuncParams(f) {
-			checks = append(checks, getNilCheckingStmt(id))
-		}
+	return node, true
+}
 
-		f.Body.List = append(checks, f.Body.List...)
-	case requiresExp:
-		exp := c[len("@\\requires"):]
-		check, err := getExpCheckingStmt(exp)
+// positionAsString returns a string representation of the given token position
+//@requires fr.fset != nil
+func (fr *fileRewriter) positionAsString(pos token.Pos) string {
+	position := fr.fset.Position(pos)
+	return position.Filename + ":" + strconv.Itoa(position.Line) + ":" + strconv.Itoa(position.Column)
+}
+
+// rewriteFuncDecl is in charge of generating contract-enforcing code for functions
+//@requires fd != nil
+func (fr *fileRewriter) rewriteFuncDecl(fd *ast.FuncDecl) (*ast.FuncDecl, bool) {
+	if fd.Doc == nil {
+		return fd, true // nothing to do, the function does not have a comment
+	}
+
+	cp := contract.Parser{}
+	comments := fd.Doc.List
+	for _, commentLine := range comments {
+
+		checkCodeRoot, err := cp.Parse(commentLine.Text)
+
 		if err != nil {
-			return err
+			log.Printf("%s: Warning: %s", fr.positionAsString(commentLine.Pos()), err.Error())
+			continue
 		}
-		f.Body.List = append([]ast.Stmt{check}, f.Body.List...)
-	default:
-		return fmt.Errorf("could not generate contract code for '%s': unknown contract type %d", c, ctype)
-	}
 
-	return nil
-}
-
-func getContractType(c string) (int, error) {
-	if strings.HasPrefix(c, "@\\requires nonil") {
-		return requiresNonil, nil
-	}
-	if strings.HasPrefix(c, "@\\requires") {
-		return requiresExp, nil
-	}
-
-	return -1, fmt.Errorf("could not identify the contrat for '%s'", c)
-}
-
-// getNilCheckingStmt yields a stmt that checks if the given id is nil.
-func getNilCheckingStmt(id string) ast.Stmt {
-	args := astutils.NewCallArgs(astutils.NewStringLit("\"value of parameter '" + id + "' must not be nil\""))
-	logCall := astutils.NewCallAsStmt("log", "Fatal", args)
-	cond := astutils.NewBinExp(token.EQL, astutils.NewID(id), astutils.NewID("nil"))
-	body := astutils.NewStmtBlock(logCall)
-
-	return astutils.NewIf(cond, *body)
-	// you can do astutils.NewIf(cond, *body, astutils.WithElse(elseBody))
-}
-
-func getExpCheckingStmt(exp string) (ast.Stmt, error) {
-	expr, err := parser.ParseExpr("!(" + exp + ")")
-	if err != nil {
-		log.Printf("error in expression: %v", err)
-		return nil, fmt.Errorf("error while parsing expression %s: %v", exp, err)
-	}
-
-	args := astutils.NewCallArgs(astutils.NewStringLit("\"condition (" + exp + " ) must be met\""))
-	logCall := astutils.NewCallAsStmt("log", "Fatal", args)
-	body := astutils.NewStmtBlock(logCall)
-
-	return astutils.NewIf(expr, *body), nil
-}
-
-func getFuncParams(fd *ast.FuncDecl) []string {
-	result := []string{}
-
-	for _, field := range fd.Type.Params.List {
-
-		for _, n := range field.Names {
-			result = append(result, n.Name)
+		if checkCodeRoot == nil && err == nil {
+			continue // not a comment containing a contract
 		}
+
+		fd.Body.List = append([]ast.Stmt{checkCodeRoot}, fd.Body.List...)
 	}
 
-	return result
+	return fd, true
 }
