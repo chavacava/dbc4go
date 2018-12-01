@@ -10,9 +10,13 @@ import (
 	"go/token"
 	"io/ioutil"
 	"log"
+	"os"
 	"strconv"
 
-	"github.com/chavacava/dbc4go/contract"
+	"github.com/chavacava/dbc4go/internal/contract/generator"
+	cparser "github.com/chavacava/dbc4go/internal/contract/parser"
+	cast "github.com/chavacava/dbc4go/internal/contract/parser/ast"
+
 	"github.com/fatih/astrewrite"
 )
 
@@ -20,26 +24,29 @@ func main() {
 	srcFile := flag.String("i", "", "input source file")
 	flag.Parse()
 
+	if *srcFile == "" {
+		log.Fatal("Undefined input file, please set the flag -i")
+	}
+
 	src, err := ioutil.ReadFile(*srcFile)
 	if err != nil {
-		log.Fatalf("could not open input file: %v", err)
+		log.Fatalf("Could not open input file: %v", err)
 	}
 
 	buf, err := analyzeCode(src, *srcFile)
 
 	if err != nil {
-		log.Fatalf("could not analyze source code: %v", err)
+		log.Fatalf("Could not analyze source code: %v", err)
 	}
 
-	fmt.Printf("%s", buf.Bytes())
-	_ = buf
+	fmt.Fprintf(os.Stdout, "%s", buf.Bytes())
 }
 
 func analyzeCode(src []byte, fileName string) (bytes.Buffer, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, fileName, src, parser.ParseComments)
 	if err != nil {
-		return bytes.Buffer{}, fmt.Errorf("could not parse input code: %v", err)
+		return bytes.Buffer{}, fmt.Errorf("could not parse code: %v", err)
 	}
 
 	fr := fileRewriter{fset: fset}
@@ -59,11 +66,12 @@ type fileRewriter struct {
 
 // rewrite rewrites an AST node
 // this function is to be used with astrewrite.Walk
+//@requires node != nil
 func (fr *fileRewriter) rewrite(node ast.Node) (ast.Node, bool) {
 	switch n := node.(type) {
 	case *ast.FuncDecl:
-		fd, cont := fr.rewriteFuncDecl(n)
-		return fd, cont
+		fd := fr.rewriteFuncDecl(n)
+		return fd, true
 	}
 
 	return node, true
@@ -78,28 +86,28 @@ func (fr *fileRewriter) positionAsString(pos token.Pos) string {
 
 // rewriteFuncDecl is in charge of generating contract-enforcing code for functions
 //@requires fd != nil
-func (fr *fileRewriter) rewriteFuncDecl(fd *ast.FuncDecl) (*ast.FuncDecl, bool) {
+func (fr *fileRewriter) rewriteFuncDecl(fd *ast.FuncDecl) *ast.FuncDecl {
 	if fd.Doc == nil {
-		return fd, true // nothing to do, the function does not have a comment
+		return fd // nothing to do, the function does not have a comment
 	}
 
-	cp := contract.Parser{}
+	cp := cparser.NewParser()
+	contract := cast.NewContract(fd)
 	comments := fd.Doc.List
 	for _, commentLine := range comments {
-
-		checkCodeRoot, err := cp.Parse(commentLine.Text)
-
+		err := cp.Parse(&contract, commentLine.Text)
 		if err != nil {
 			log.Printf("%s: Warning: %s", fr.positionAsString(commentLine.Pos()), err.Error())
 			continue
 		}
 
-		if checkCodeRoot == nil && err == nil {
-			continue // not a comment containing a contract
+		contractStmts, errs := generator.GenerateCode(&contract)
+		for _, err := range errs {
+			log.Printf("%s: Warning: %v", fr.positionAsString(commentLine.Pos()), err)
 		}
 
-		fd.Body.List = append([]ast.Stmt{checkCodeRoot}, fd.Body.List...)
+		fd.Body.List = append(contractStmts, fd.Body.List...)
 	}
 
-	return fd, true
+	return fd
 }
