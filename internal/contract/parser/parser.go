@@ -18,7 +18,7 @@ func NewParser() Parser {
 
 // Parse enrich the Contract with the clause if present in the given comment line
 func (p Parser) Parse(contract *cast.Contract, line string) error {
-	re := regexp.MustCompile("@(?P<kind>[a-z]+)[\t ]+(?P<expr>[^$]+)")
+	re := regexp.MustCompile("^@(?P<kind>[a-z]+)[\t ]+(?P<expr>[^$]+)")
 	r2 := re.FindAllStringSubmatch(line, -1)
 
 	if r2 == nil {
