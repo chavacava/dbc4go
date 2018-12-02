@@ -2,7 +2,10 @@
 package astutils
 
 import (
+	"bytes"
 	"go/ast"
+	"go/parser"
+	"go/printer"
 	"go/token"
 )
 
@@ -18,8 +21,13 @@ func NewBinExp(op token.Token, lhs, rhs ast.Expr) *ast.BinaryExpr {
 
 // NewCall yields a function call AST
 func NewCall(pkg, funcName string, args []ast.Expr) *ast.CallExpr {
-	return &ast.CallExpr{Fun: &ast.SelectorExpr{X: &ast.Ident{Name: pkg, NamePos: 0, Obj: nil},
-		Sel: &ast.Ident{Name: funcName, NamePos: 0, Obj: nil}},
+	if pkg != "" {
+		return &ast.CallExpr{Fun: &ast.SelectorExpr{X: &ast.Ident{Name: pkg, NamePos: 0, Obj: nil},
+			Sel: &ast.Ident{Name: funcName, NamePos: 0, Obj: nil}},
+			Args: args, Ellipsis: 0, Lparen: 0, Rparen: 0}
+	}
+
+	return &ast.CallExpr{Fun: &ast.Ident{Name: funcName, NamePos: 0, Obj: nil},
 		Args: args, Ellipsis: 0, Lparen: 0, Rparen: 0}
 }
 
@@ -31,7 +39,7 @@ func NewCallArgs(args ...ast.Expr) []ast.Expr {
 
 // NewCallAsStmt yields a function call as a statement AST
 func NewCallAsStmt(pkg, funcName string, args []ast.Expr) *ast.ExprStmt {
-	return &ast.ExprStmt{X: NewCall("log", "Fatal", args)}
+	return &ast.ExprStmt{X: NewCall(pkg, funcName, args)}
 }
 
 // NewIf yields an if AST
@@ -101,4 +109,23 @@ func NewCallExpr(function *ast.Expr, params []ast.Expr) *ast.CallExpr {
 		Ellipsis: token.NoPos,
 		Rparen:   0,
 	}
+func GetRequiresCode(condition string, errorMsg string) ast.Stmt {
+	condAST, err := parser.ParseExpr(condition)
+	if err != nil {
+		panic(err.Error()) // TODO provide better error
+	}
+
+	msgAST := NewStringLit(errorMsg)
+	panicArgs := NewCallArgs(msgAST)
+	call2panic := NewCallAsStmt("log", "Panic", panicArgs)
+	body := NewStmtBlock(call2panic)
+	return NewIf(condAST, *body)
+}
+
+// GOfmt returns a string representation of the expression.
+func GOfmt(x ast.Node) string {
+	buf := bytes.Buffer{}
+	fs := token.NewFileSet()
+	printer.Fprint(&buf, fs, x)
+	return buf.String()
 }
