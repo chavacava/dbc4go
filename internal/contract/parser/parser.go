@@ -38,6 +38,13 @@ func (p Parser) Parse(contract *cast.Contract, line string) error {
 		}
 
 		contract.AddRequires(clause)
+	case "ensures":
+		clause, err := p.parseEnsures(expr)
+		if err != nil {
+			return errors.Wrap(err, "invalid @ensures clause")
+		}
+
+		contract.AddEnsures(clause)
 	default:
 		return errors.Errorf("unknown contract kind %s", kind)
 	}
@@ -48,4 +55,8 @@ func (p Parser) Parse(contract *cast.Contract, line string) error {
 //@requires expr != ""
 func (p Parser) parseRequires(expr string) (cast.Requires, error) {
 	return cast.NewRequires(expr), nil
+}
+
+func (p Parser) parseEnsures(expr string) (cast.Ensures, error) {
+	return cast.NewEnsures(expr), nil
 }

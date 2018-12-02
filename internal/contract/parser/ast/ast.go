@@ -8,13 +8,15 @@ import (
 // Contract is the root of the AST of contracts
 type Contract struct {
 	requires []Requires
+	ensures  []Ensures
 	target   *ast.FuncDecl
 }
 
 // NewContract creates a Contract
 //@requires target != nil
-func NewContract(target *ast.FuncDecl) Contract {
-	return Contract{requires: []Requires{}, target: target}
+//@ensures c.target == target
+func NewContract(target *ast.FuncDecl) (c Contract) {
+	return Contract{requires: []Requires{}, ensures: []Ensures{}, target: target}
 }
 
 // AddRequires adds a requires to this contract
@@ -25,6 +27,16 @@ func (c *Contract) AddRequires(r Requires) {
 // Requires yields requires clauses of this contract
 func (c *Contract) Requires() []Requires {
 	return c.requires
+}
+
+// AddEnsures adds a ensures to this contract
+func (c *Contract) AddEnsures(r Ensures) {
+	c.ensures = append(c.ensures, r)
+}
+
+// Ensures yields ensures clauses of this contract
+func (c *Contract) Ensures() []Ensures {
+	return c.ensures
 }
 
 // Requires is a @requires clause of a contract
@@ -45,4 +57,24 @@ func (r Requires) ExpandedExpression() string {
 
 func (r Requires) String() string {
 	return "@requires " + r.expr
+}
+
+// Ensures is a @ensures clause of a contract
+type Ensures struct {
+	expr string
+}
+
+// NewEnsures creates a Ensures object
+//@ensures expr != ""
+func NewEnsures(expr string) Ensures {
+	return Ensures{expr: expr}
+}
+
+// ExpandedExpression yields the expanded ensures' expression
+func (r Ensures) ExpandedExpression() string {
+	return r.expr
+}
+
+func (r Ensures) String() string {
+	return "@ensures " + r.expr
 }

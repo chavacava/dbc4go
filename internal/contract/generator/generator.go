@@ -27,6 +27,16 @@ func GenerateCode(contract *cast.Contract) ([]ast.Stmt, []error) {
 		result = append(result, stmt)
 	}
 
+	for _, e := range contract.Ensures() {
+		stmt, err := generateEnsuresCode(e)
+		if err != nil {
+			errs = append(errs, errors.Wrapf(err, "unable to generate code for the clause '%s'", e))
+			continue
+		}
+
+		result = append(result, stmt)
+	}
+
 	return result, errs
 }
 
@@ -43,6 +53,23 @@ func generateRequiresCode(r cast.Requires) (ast.Stmt, error) {
 	body := astutils.NewStmtBlock(call2panic)
 
 	return astutils.NewIf(expAST, *body), nil
+}
+
+func generateEnsuresCode(e cast.Ensures) (ast.Stmt, error) {
+	exp := e.ExpandedExpression()
+	expAST, err := parser.ParseExpr("!(" + exp + ")")
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to parse expression '%s'", exp)
+	}
+
+	msgAST := astutils.NewStringLit("\"postcondition " + escapeDoubleQuotes(exp) + " not satisfied\"")
+	panicArgs := astutils.NewCallArgs(msgAST)
+	call2panic := astutils.NewCallAsStmt("", "panic", panicArgs)
+	body := astutils.NewStmtBlock(call2panic)
+
+	funcBody := astutils.NewStmtBlock(astutils.NewIf(expAST, *body))
+	funcCall := astutils.NewCallAnonymous(funcBody, []ast.Expr{})
+	return astutils.NewDeferStmt(funcCall), nil
 }
 
 func escapeDoubleQuotes(str string) string {

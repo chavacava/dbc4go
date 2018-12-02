@@ -28,6 +28,22 @@ func NewCall(pkg, funcName string, args []ast.Expr) *ast.CallExpr {
 		Args: args, Ellipsis: 0, Lparen: 0, Rparen: 0}
 }
 
+func NewCallAnonymous(body *ast.BlockStmt, args []ast.Expr) *ast.CallExpr {
+	fun := &ast.FuncLit{
+		Type: &ast.FuncType{
+			Func: 0,
+			Params: &ast.FieldList{
+				Opening: 0,
+				Closing: 0,
+				List:    []*ast.Field{},
+			},
+		},
+		Body: body,
+	}
+
+	return &ast.CallExpr{Fun: fun, Args: args, Ellipsis: 0, Lparen: 0, Rparen: 0}
+}
+
 // NewCallArgs yields a slice of expressions that can be used as arguments in
 // a function call
 func NewCallArgs(args ...ast.Expr) []ast.Expr {
@@ -97,7 +113,7 @@ func NewDeferStmt(functionCall *ast.CallExpr) *ast.DeferStmt {
 	}
 }
 
-// NewCallExpr yilds a new function call expression
+// NewCallExpr yields a new function call expression
 func NewCallExpr(function *ast.Expr, params []ast.Expr) *ast.CallExpr {
 	return &ast.CallExpr{
 		Fun:      *function,
