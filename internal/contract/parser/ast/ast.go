@@ -18,7 +18,6 @@ func NewContract(target *ast.FuncDecl) Contract {
 }
 
 // AddRequires adds a requires to this contract
-//@requires r != nil
 func (c *Contract) AddRequires(r Requires) {
 	c.requires = append(c.requires, r)
 }

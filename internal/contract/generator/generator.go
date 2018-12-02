@@ -3,6 +3,7 @@ package generator
 import (
 	"go/ast"
 	"go/parser"
+	"strings"
 
 	"github.com/chavacava/dbc4go/internal/astutils"
 	cast "github.com/chavacava/dbc4go/internal/contract/parser/ast"
@@ -34,10 +35,14 @@ func generateRequiresCode(r cast.Requires) (ast.Stmt, error) {
 		return nil, errors.Wrapf(err, "unable to parse expression '%s'", exp)
 	}
 
-	msgAST := astutils.NewStringLit("\"precondition " + exp + " not satisfied\"")
+	msgAST := astutils.NewStringLit("\"precondition " + escapeDoubleQuotes(exp) + " not satisfied\"")
 	panicArgs := astutils.NewCallArgs(msgAST)
 	call2panic := astutils.NewCallAsStmt("", "panic", panicArgs)
 	body := astutils.NewStmtBlock(call2panic)
 
 	return astutils.NewIf(expAST, *body), nil
+}
+
+func escapeDoubleQuotes(str string) string {
+	return strings.Replace(str, "\"", "\\\"", -1)
 }
