@@ -2,10 +2,7 @@
 package astutils
 
 import (
-	"bytes"
 	"go/ast"
-	"go/parser"
-	"go/printer"
 	"go/token"
 )
 
@@ -109,25 +106,4 @@ func NewCallExpr(function *ast.Expr, params []ast.Expr) *ast.CallExpr {
 		Ellipsis: token.NoPos,
 		Rparen:   0,
 	}
-}
-
-func GetRequiresCode(condition string, errorMsg string) ast.Stmt {
-	condAST, err := parser.ParseExpr(condition)
-	if err != nil {
-		panic(err.Error()) // TODO provide better error
-	}
-
-	msgAST := NewStringLit(errorMsg)
-	panicArgs := NewCallArgs(msgAST)
-	call2panic := NewCallAsStmt("log", "Panic", panicArgs)
-	body := NewStmtBlock(call2panic)
-	return NewIf(condAST, *body)
-}
-
-// GOfmt returns a string representation of the expression.
-func GOfmt(x ast.Node) string {
-	buf := bytes.Buffer{}
-	fs := token.NewFileSet()
-	printer.Fprint(&buf, fs, x)
-	return buf.String()
 }
