@@ -1,3 +1,4 @@
+//go:generate dbc4go -i $GOFILE -o $GOFILE
 package main
 
 import (
@@ -22,10 +23,20 @@ import (
 
 func main() {
 	srcFile := flag.String("i", "", "input source file")
+	targetFile := flag.String("o", "", "ouput file (defaults to stdout")
 	flag.Parse()
 
 	if *srcFile == "" {
 		log.Fatal("Undefined input file, please set the flag -i")
+	}
+
+	target := os.Stdout
+	if *targetFile != "" {
+		var err error
+		target, err = os.Create(*targetFile)
+		if err != nil {
+			log.Fatalf("Unable to create output file '%s': %v", *targetFile, err)
+		}
 	}
 
 	src, err := ioutil.ReadFile(*srcFile)
@@ -39,7 +50,7 @@ func main() {
 		log.Fatalf("Could not analyze source code: %v", err)
 	}
 
-	fmt.Fprintf(os.Stdout, "%s", buf.Bytes())
+	fmt.Fprintf(target, "%s", buf.Bytes())
 }
 
 func analyzeCode(src []byte, fileName string) (bytes.Buffer, error) {
