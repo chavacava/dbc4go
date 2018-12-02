@@ -4,6 +4,8 @@ Design by Contract&trade; for GO is a code generator that takes GO code annotate
 
 Contracts are embedded into comments, therefore code annotated with contracts is valid GO code.
 
+This project uses contracts itself! Check the source code and the `Makefile` to see how.
+
 ## Available directives to write contracts
 
 ### `@requires`
@@ -12,9 +14,9 @@ Describes **preconditions** imposed by functions/methods.
 
 Syntax:
 
-`@requires` _standard Boolean expression_
+`@requires` _GO Boolean expression_
 
-As you can see in the example below, the _standard Boolean expression_ must be a valid GO boolean expression as it will be used as the condition in a `if-then` statement.
+As you can see in the example below, the _GO Boolean expression_ must be a valid GO boolean expression as it will be used as the condition in a `if-then` statement.
 
 The expression can make reference to any identifier available in the scope at the beginning of the annotated function (for example: function parameters, method receiver, global variables, other functions)
 
@@ -41,7 +43,7 @@ func NewCar(wheels int, wheelsDrive int, maxSpeedKmh int, manufacturer string) C
 //@requires manufacturer != ""
 func NewCar(wheels int, wheelsDrive int, maxSpeedKmh int, manufacturer string) Car {
         if !(manufacturer != "") {
-                panic("precondition manufacturer != "" not satisfied")
+                panic("precondition manufacturer != \"\" not satisfied")
         }
         if !(maxSpeedKmh > 0 && maxSpeedKmh <= maxAuthorizedSpeed) {
                 panic("precondition maxSpeedKmh > 0 && maxSpeedKmh <= maxAuthorizedSpeed not satisfied")
@@ -65,7 +67,7 @@ Describes **postconditions** of a function/method.
 
 Syntax:
 
-`@ensures` _standard Boolean expression_
+`@ensures` _GO Boolean expression_
 
 The expression can make reference to any identifier available in the scope at the beginning of the annotated function (for example: function parameters, method receiver, global variables, other functions)
 
@@ -96,7 +98,7 @@ Defines an invariant property of a `struct`ure.
 
 Syntax:
 
-`@invariant` _standard Boolean expression_
+`@invariant` _GO Boolean expression_
 
 The expression can make reference to any _private_ field identifier of the `struct` to which the invariant applies to.
 
@@ -105,7 +107,7 @@ Examples:
 ```go
 // Car data-model
 //@invariant speed <= maxSpeedKmh
-type BankAccount struct {
+type Car struct {
         maxSpeedKmh int
         speed       int
         // other fields ...
@@ -121,4 +123,3 @@ type BankAccount struct {
         // other fields ...
 }
 ```
-

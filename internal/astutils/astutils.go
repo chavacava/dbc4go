@@ -109,6 +109,8 @@ func NewCallExpr(function *ast.Expr, params []ast.Expr) *ast.CallExpr {
 		Ellipsis: token.NoPos,
 		Rparen:   0,
 	}
+}
+
 func GetRequiresCode(condition string, errorMsg string) ast.Stmt {
 	condAST, err := parser.ParseExpr(condition)
 	if err != nil {
