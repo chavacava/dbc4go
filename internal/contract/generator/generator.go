@@ -1,3 +1,4 @@
+//go:generate dbc4go -i $GOFILE -o $GOFILE
 package generator
 
 import (
@@ -12,6 +13,7 @@ import (
 
 // GenerateCode yields the list of GO statements that enforce the given contract
 // It also yields the list of errors that occurred while the generation
+//@requires contract != nil
 func GenerateCode(contract *cast.Contract) ([]ast.Stmt, []error) {
 	result := []ast.Stmt{}
 	errs := []error{}

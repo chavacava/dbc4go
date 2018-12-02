@@ -1,3 +1,4 @@
+//go:generate dbc4go -i $GOFILE -o $GOFILE
 package parser
 
 import (
@@ -17,6 +18,7 @@ func NewParser() Parser {
 }
 
 // Parse enrich the Contract with the clause if present in the given comment line
+//@requires contract != nil
 func (p Parser) Parse(contract *cast.Contract, line string) error {
 	re := regexp.MustCompile("//@(?P<kind>[a-z]+)[\t ]+(?P<expr>[^$]+)")
 	r2 := re.FindAllStringSubmatch(line, -1)
@@ -43,6 +45,7 @@ func (p Parser) Parse(contract *cast.Contract, line string) error {
 	return nil
 }
 
+//@requires expr != ""
 func (p Parser) parseRequires(expr string) (cast.Requires, error) {
 	return cast.NewRequires(expr), nil
 }
