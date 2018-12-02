@@ -30,15 +30,6 @@ func main() {
 		log.Fatal("Undefined input file, please set the flag -i")
 	}
 
-	target := os.Stdout
-	if *targetFile != "" {
-		var err error
-		target, err = os.Create(*targetFile)
-		if err != nil {
-			log.Fatalf("Unable to create output file '%s': %v", *targetFile, err)
-		}
-	}
-
 	src, err := ioutil.ReadFile(*srcFile)
 	if err != nil {
 		log.Fatalf("Could not open input file: %v", err)
@@ -48,6 +39,18 @@ func main() {
 
 	if err != nil {
 		log.Fatalf("Could not analyze source code: %v", err)
+	}
+
+	target := os.Stdout
+
+	if *targetFile != "" {
+		var err error
+		target, err = os.Create(*targetFile)
+		if err != nil {
+			log.Fatalf("Unable to create output file '%s': %v", *targetFile, err)
+		}
+		defer target.Close()
+		log.Printf("Generating file '%s'", *targetFile)
 	}
 
 	fmt.Fprintf(target, "%s", buf.Bytes())
