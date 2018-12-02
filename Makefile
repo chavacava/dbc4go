@@ -5,10 +5,16 @@ GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 GOMOD=$(GOCMD) mod
+GOGENERATE=$(GOCMD) generate
+
+# Git parameters
+GITCMD=git
+GITCHECKOUT=$(GITCMD) checkout
 
 # Sources parameters
 SOURCE_ENTRYPOINT=./cmd
 # Binary parameters
+
 BINARY_NAME=dbc4go
 BINARY_DESTINATION=./bin
 BINARY_PATH=$(BINARY_DESTINATION)/$(BINARY_NAME)
@@ -17,8 +23,8 @@ BINARY_PATH=$(BINARY_DESTINATION)/$(BINARY_NAME)
 # Tagets
 all:	test build
 build:
-		$(GOBUILD) -o $(BINARY_PATH) -v $(SOURCE_ENTRYPOINT)
-#   Unit tests
+		$(GOGENERATE) ./... && $(GOBUILD) -o $(BINARY_PATH) -v $(SOURCE_ENTRYPOINT) && $(GITCHECKOUT) -- .
+# Unit tests
 test:
 		$(GOTEST) -v --cover ./...
 clean: 

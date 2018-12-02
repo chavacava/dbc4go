@@ -80,7 +80,6 @@ type fileRewriter struct {
 
 // rewrite rewrites an AST node
 // this function is to be used with astrewrite.Walk
-//@requires node != nil
 func (fr *fileRewriter) rewrite(node ast.Node) (ast.Node, bool) {
 	switch n := node.(type) {
 	case *ast.FuncDecl:
