@@ -22,8 +22,13 @@ BINARY_PATH=$(BINARY_DESTINATION)/$(BINARY_NAME)
 
 # Tagets
 all:	test build
-build:
+
+# Build with contracts
+buildwc:
 		$(GOGENERATE) ./... && $(GOBUILD) -o $(BINARY_PATH) -v $(SOURCE_ENTRYPOINT) && $(GITCHECKOUT) -- .
+
+build:
+		$(GOBUILD) -o $(BINARY_PATH) -v $(SOURCE_ENTRYPOINT)
 # Unit tests
 test:
 		$(GOTEST) -v --cover ./...
