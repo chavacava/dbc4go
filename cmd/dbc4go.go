@@ -113,14 +113,14 @@ func (fr *fileRewriter) rewriteFuncDecl(fd *ast.FuncDecl) *ast.FuncDecl {
 			log.Printf("%s: Warning: %s", fr.positionAsString(commentLine.Pos()), err.Error())
 			continue
 		}
-
-		contractStmts, errs := generator.GenerateCode(&contract)
-		for _, err := range errs {
-			log.Printf("%s: Warning: %v", fr.positionAsString(commentLine.Pos()), err)
-		}
-
-		fd.Body.List = append(contractStmts, fd.Body.List...)
 	}
+
+	contractStmts, errs := generator.GenerateCode(&contract)
+	for _, err := range errs {
+		log.Printf("Warning: %v", err)
+	}
+
+	fd.Body.List = append(contractStmts, fd.Body.List...)
 
 	return fd
 }
