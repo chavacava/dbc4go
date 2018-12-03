@@ -34,14 +34,14 @@ func NewCall(pkg, funcName string, args []ast.Expr) (r *ast.CallExpr) {
 
 // NewCallAnonymous yields an anonymous call
 //@ensures r != nil
-func NewCallAnonymous(body *ast.BlockStmt, args []ast.Expr) (r *ast.CallExpr) {
+func NewCallAnonymous(params []*ast.Field, body *ast.BlockStmt, args []ast.Expr) (r *ast.CallExpr) {
 	fun := &ast.FuncLit{
 		Type: &ast.FuncType{
 			Func: 0,
 			Params: &ast.FieldList{
 				Opening: 0,
 				Closing: 0,
-				List:    []*ast.Field{},
+				List:    params,
 			},
 		},
 		Body: body,
@@ -112,7 +112,7 @@ func NewFuncDecl(name string, formalParams *ast.FieldList, body *ast.BlockStmt) 
 	}
 }
 
-// NewDeferStmt yilds a new defer statement
+// NewDeferStmt yields a new defer statement
 func NewDeferStmt(functionCall *ast.CallExpr) *ast.DeferStmt {
 	return &ast.DeferStmt{
 		Defer: 0,
@@ -129,4 +129,46 @@ func NewCallExpr(function *ast.Expr, params []ast.Expr) *ast.CallExpr {
 		Ellipsis: token.NoPos,
 		Rparen:   0,
 	}
+}
+
+func newField(names []string, t ast.Expr) ast.Field {
+	r := ast.Field{}
+	r.Names = []*ast.Ident{}
+	for _, n := range names {
+		id := NewID(n)
+		r.Names = append(r.Names, id)
+	}
+	r.Type = t
+	return r
+}
+
+// CopyFields creates a copy of the given field slice.
+// New field names are prefixed by the givin prefix
+//@ensures len(l) == len(result)
+func CopyFields(l []*ast.Field, prefix string) (result []*ast.Field) {
+	result = []*ast.Field{}
+	for _, f := range l {
+		names := []string{}
+		for _, n := range f.Names {
+			names = append(names, prefix+n.Name)
+		}
+
+		nf := newField(names, f.Type)
+		result = append(result, &nf)
+	}
+
+	return result
+}
+
+// ArgsFromFields creates a list of arguments ([]ast.Expr) from a list of fields
+//@ensures len(l)<=len(result)
+func ArgsFromFields(l []*ast.Field) (result []ast.Expr) {
+	result = []ast.Expr{}
+	for _, f := range l {
+		for _, n := range f.Names {
+			result = append(result, n)
+		}
+	}
+
+	return result
 }

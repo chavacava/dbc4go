@@ -21,6 +21,11 @@ func NewFuncContract(target *ast.FuncDecl) (c FuncContract) {
 	return FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: target}
 }
 
+//@ensures t != nil
+func (c *Contract) Target() (t *ast.FuncDecl) {
+	return c.target
+}
+
 // AddRequires adds a requires to this contract
 //@ensures c.requires[len(c.requires)-1] == r
 func (c *FuncContract) AddRequires(r Requires) {
