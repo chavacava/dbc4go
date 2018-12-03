@@ -15,23 +15,28 @@ type Contract struct {
 // NewContract creates a Contract
 //@requires target != nil
 //@ensures c.target == target
+//@ensures len(c.requires) == 0
+//@ensures len(c.ensures) == 0
 func NewContract(target *ast.FuncDecl) (c Contract) {
 	return Contract{requires: []Requires{}, ensures: []Ensures{}, target: target}
 }
 
 // AddRequires adds a requires to this contract
+//@ensures c.requires[len(c.requires)-1] == r
 func (c *Contract) AddRequires(r Requires) {
 	c.requires = append(c.requires, r)
 }
 
 // Requires yields requires clauses of this contract
-func (c *Contract) Requires() []Requires {
+//@ensures len(r) == len(c.requires)
+func (c *Contract) Requires() (r []Requires) {
 	return c.requires
 }
 
 // AddEnsures adds a ensures to this contract
-func (c *Contract) AddEnsures(r Ensures) {
-	c.ensures = append(c.ensures, r)
+//@ensures c.ensures[len(c.ensures)-1] == e
+func (c *Contract) AddEnsures(e Ensures) {
+	c.ensures = append(c.ensures, e)
 }
 
 // Ensures yields ensures clauses of this contract

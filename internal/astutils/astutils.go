@@ -7,17 +7,21 @@ import (
 )
 
 // NewID yields an identifier node
-func NewID(id string) *ast.Ident {
+//@requires id != ""
+//@ensures r != nil && r.Name == id
+func NewID(id string) (r *ast.Ident) {
 	return &ast.Ident{Name: id, NamePos: 0, Obj: nil}
 }
 
 // NewBinExp yields a binary expression AST
-func NewBinExp(op token.Token, lhs, rhs ast.Expr) *ast.BinaryExpr {
+//@ensures r != nil
+func NewBinExp(op token.Token, lhs, rhs ast.Expr) (r *ast.BinaryExpr) {
 	return &ast.BinaryExpr{Op: op, OpPos: 0, X: lhs, Y: rhs}
 }
 
 // NewCall yields a function call AST
-func NewCall(pkg, funcName string, args []ast.Expr) *ast.CallExpr {
+//@ensures r != nil
+func NewCall(pkg, funcName string, args []ast.Expr) (r *ast.CallExpr) {
 	if pkg != "" {
 		return &ast.CallExpr{Fun: &ast.SelectorExpr{X: &ast.Ident{Name: pkg, NamePos: 0, Obj: nil},
 			Sel: &ast.Ident{Name: funcName, NamePos: 0, Obj: nil}},
@@ -28,7 +32,9 @@ func NewCall(pkg, funcName string, args []ast.Expr) *ast.CallExpr {
 		Args: args, Ellipsis: 0, Lparen: 0, Rparen: 0}
 }
 
-func NewCallAnonymous(body *ast.BlockStmt, args []ast.Expr) *ast.CallExpr {
+// NewCallAnonymous yields an anonymous call
+//@ensures r != nil
+func NewCallAnonymous(body *ast.BlockStmt, args []ast.Expr) (r *ast.CallExpr) {
 	fun := &ast.FuncLit{
 		Type: &ast.FuncType{
 			Func: 0,
@@ -46,7 +52,8 @@ func NewCallAnonymous(body *ast.BlockStmt, args []ast.Expr) *ast.CallExpr {
 
 // NewCallArgs yields a slice of expressions that can be used as arguments in
 // a function call
-func NewCallArgs(args ...ast.Expr) []ast.Expr {
+//@ensures len(args) == len(r)
+func NewCallArgs(args ...ast.Expr) (r []ast.Expr) {
 	return append([]ast.Expr{}, args...)
 }
 

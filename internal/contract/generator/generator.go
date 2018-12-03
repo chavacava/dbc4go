@@ -14,9 +14,10 @@ import (
 // GenerateCode yields the list of GO statements that enforce the given contract
 // It also yields the list of errors that occurred while the generation
 //@requires contract != nil
-func GenerateCode(contract *cast.Contract) ([]ast.Stmt, []error) {
+//@ensures len(contract.Ensures())+len(contract.Requires())==len(stmts)+len(errs)
+func GenerateCode(contract *cast.Contract) (stmts []ast.Stmt, errs []error) {
 	result := []ast.Stmt{}
-	errs := []error{}
+	errs = []error{}
 	for _, r := range contract.Requires() {
 		stmt, err := generateRequiresCode(r)
 		if err != nil {
@@ -72,6 +73,7 @@ func generateEnsuresCode(e cast.Ensures) (ast.Stmt, error) {
 	return astutils.NewDeferStmt(funcCall), nil
 }
 
-func escapeDoubleQuotes(str string) string {
+//@ensures len(str)<=len(r)
+func escapeDoubleQuotes(str string) (r string) {
 	return strings.Replace(str, "\"", "\\\"", -1)
 }
