@@ -59,8 +59,6 @@ func NewCar(wheels int, wheelsDrive int, maxSpeedKmh int, manufacturer string) C
 }
 ```
 
-## Planned directives to write contracts
-
 ### `@ensures`
 
 Describes **postconditions** of a function/method.     
@@ -80,6 +78,10 @@ Example:
 //@ensures c.speed <= c.maxSpeedKmh
 func (c *Car) accelerate(delta int) { ... }
 ```
+
+## Planned directives to write contracts
+
+### ==>
 The future implementation of the operator `==>` will allow to write more precise contracts like
 
 ```go
@@ -91,6 +93,8 @@ func (c *Car) accelerate(delta int) { ... }
 ```
 
 where `c.speed'` refers to the value of `c.speed` at the beginning of the method execution.
+
+Notice that until the implementation of the `==>` operator, it is possible to express the same contracts by using canonical forms: `p ==> q` can be written as `!p || q`.
 
 ### `@invariant`
 
