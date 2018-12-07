@@ -28,14 +28,13 @@ func GenerateCode(contract *contract.FuncContract) (stmts []ast.Stmt, errs []err
 		result = append(result, stmt)
 	}
 
-	for _, e := range contract.Ensures() {
-		stmt, err := generateEnsuresCode(e)
+	if len(contract.Ensures()) > 0 {
+		stmt, err := generateEnsuresCode(contract.Ensures())
 		if err != nil {
-			errs = append(errs, errors.Wrapf(err, "unable to generate code for the clause '%s'", e))
-			continue
+			errs = append(errs, errors.Wrap(err, "unable to generate code for @ensure clause"))
+		} else {
+			result = append(result, stmt)
 		}
-
-		result = append(result, stmt)
 	}
 
 	return result, errs
@@ -56,20 +55,24 @@ func generateRequiresCode(r contract.Requires) (ast.Stmt, error) {
 	return astutils.NewIf(expAST, *body), nil
 }
 
-func generateEnsuresCode(e contract.Ensures) (ast.Stmt, error) {
-	exp := e.ExpandedExpression()
-	expAST, err := parser.ParseExpr("!(" + exp + ")")
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to parse expression '%s'", exp)
+func generateEnsuresCode(clauses []contract.Ensures) (ast.Stmt, error) {
+	funcBody := []ast.Stmt{}
+
+	for _, clause := range clauses {
+		exp := clause.ExpandedExpression()
+		expAST, err := parser.ParseExpr("!(" + exp + ")")
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to parse expression '%s'", exp)
+		}
+
+		msgAST := astutils.NewStringLit("\"postcondition " + escapeDoubleQuotes(exp) + " not satisfied\"")
+		panicArgs := astutils.NewCallArgs(msgAST)
+		call2panic := astutils.NewCallAsStmt("", "panic", panicArgs)
+		body := astutils.NewStmtBlock(call2panic)
+		funcBody = append(funcBody, astutils.NewIf(expAST, *body))
 	}
 
-	msgAST := astutils.NewStringLit("\"postcondition " + escapeDoubleQuotes(exp) + " not satisfied\"")
-	panicArgs := astutils.NewCallArgs(msgAST)
-	call2panic := astutils.NewCallAsStmt("", "panic", panicArgs)
-	body := astutils.NewStmtBlock(call2panic)
-
-	funcBody := astutils.NewStmtBlock(astutils.NewIf(expAST, *body))
-	funcCall := astutils.NewCallAnonymous(funcBody, []ast.Expr{})
+	funcCall := astutils.NewCallAnonymous(astutils.NewStmtBlock(funcBody...), []ast.Expr{})
 	return astutils.NewDeferStmt(funcCall), nil
 }
 
