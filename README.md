@@ -6,6 +6,11 @@ Contracts are embedded into comments, therefore code annotated with contracts is
 
 This project uses contracts itself! Check the source code and the `Makefile` to see how.
 
+# Current State
+
+This project is in a pre-ALPHA state.
+Syntax of contracts will evolve in future versions.
+
 ## Available directives to write contracts
 
 ### `@requires`
