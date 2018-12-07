@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/chavacava/dbc4go/internal/astutils"
-	cast "github.com/chavacava/dbc4go/internal/contract/parser/ast"
+	"github.com/chavacava/dbc4go/internal/contract"
 	"github.com/pkg/errors"
 )
 
@@ -15,7 +15,7 @@ import (
 // It also yields the list of errors that occurred while the generation
 //@requires contract != nil
 //@ensures len(contract.Ensures())+len(contract.Requires())==len(stmts)+len(errs)
-func GenerateCode(contract *cast.Contract) (stmts []ast.Stmt, errs []error) {
+func GenerateCode(contract *contract.FuncContract) (stmts []ast.Stmt, errs []error) {
 	result := []ast.Stmt{}
 	errs = []error{}
 	for _, r := range contract.Requires() {
@@ -41,7 +41,7 @@ func GenerateCode(contract *cast.Contract) (stmts []ast.Stmt, errs []error) {
 	return result, errs
 }
 
-func generateRequiresCode(r cast.Requires) (ast.Stmt, error) {
+func generateRequiresCode(r contract.Requires) (ast.Stmt, error) {
 	exp := r.ExpandedExpression()
 	expAST, err := parser.ParseExpr("!(" + exp + ")")
 	if err != nil {
@@ -56,7 +56,7 @@ func generateRequiresCode(r cast.Requires) (ast.Stmt, error) {
 	return astutils.NewIf(expAST, *body), nil
 }
 
-func generateEnsuresCode(e cast.Ensures) (ast.Stmt, error) {
+func generateEnsuresCode(e contract.Ensures) (ast.Stmt, error) {
 	exp := e.ExpandedExpression()
 	expAST, err := parser.ParseExpr("!(" + exp + ")")
 	if err != nil {

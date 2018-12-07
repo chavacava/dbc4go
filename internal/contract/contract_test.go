@@ -1,4 +1,4 @@
-package ast
+package contract
 
 import (
 	"go/ast"

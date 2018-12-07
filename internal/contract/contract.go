@@ -1,46 +1,46 @@
 //go:generate dbc4go -i $GOFILE -o $GOFILE
-package ast
+package contract
 
 import (
 	"go/ast"
 )
 
-// Contract is the root of the AST of contracts
-type Contract struct {
+// FuncContract represents a contract associated to a function
+type FuncContract struct {
 	requires []Requires
 	ensures  []Ensures
 	target   *ast.FuncDecl
 }
 
-// NewContract creates a Contract
+// NewFuncContract creates a FuncContract
 //@requires target != nil
 //@ensures c.target == target
 //@ensures len(c.requires) == 0
 //@ensures len(c.ensures) == 0
-func NewContract(target *ast.FuncDecl) (c Contract) {
-	return Contract{requires: []Requires{}, ensures: []Ensures{}, target: target}
+func NewFuncContract(target *ast.FuncDecl) (c FuncContract) {
+	return FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: target}
 }
 
 // AddRequires adds a requires to this contract
 //@ensures c.requires[len(c.requires)-1] == r
-func (c *Contract) AddRequires(r Requires) {
+func (c *FuncContract) AddRequires(r Requires) {
 	c.requires = append(c.requires, r)
 }
 
 // Requires yields requires clauses of this contract
 //@ensures len(r) == len(c.requires)
-func (c *Contract) Requires() (r []Requires) {
+func (c *FuncContract) Requires() (r []Requires) {
 	return c.requires
 }
 
 // AddEnsures adds a ensures to this contract
 //@ensures c.ensures[len(c.ensures)-1] == e
-func (c *Contract) AddEnsures(e Ensures) {
+func (c *FuncContract) AddEnsures(e Ensures) {
 	c.ensures = append(c.ensures, e)
 }
 
 // Ensures yields ensures clauses of this contract
-func (c *Contract) Ensures() []Ensures {
+func (c *FuncContract) Ensures() []Ensures {
 	return c.ensures
 }
 

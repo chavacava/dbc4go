@@ -14,9 +14,9 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/chavacava/dbc4go/internal/contract"
 	"github.com/chavacava/dbc4go/internal/contract/generator"
 	cparser "github.com/chavacava/dbc4go/internal/contract/parser"
-	cast "github.com/chavacava/dbc4go/internal/contract/parser/ast"
 
 	"github.com/fatih/astrewrite"
 )
@@ -116,7 +116,7 @@ func (fr *fileRewriter) rewriteFuncDecl(fd *ast.FuncDecl) *ast.FuncDecl {
 	}
 
 	cp := cparser.NewParser()
-	contract := cast.NewContract(fd)
+	contract := contract.NewFuncContract(fd)
 	comments := fd.Doc.List
 	for _, commentLine := range comments {
 		err := cp.Parse(&contract, commentLine.Text)

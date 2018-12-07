@@ -4,7 +4,7 @@ package parser
 import (
 	"regexp"
 
-	cast "github.com/chavacava/dbc4go/internal/contract/parser/ast"
+	"github.com/chavacava/dbc4go/internal/contract"
 	"github.com/pkg/errors"
 )
 
@@ -19,7 +19,7 @@ func NewParser() Parser {
 
 // Parse enrich the Contract with the clause if present in the given comment line
 //@requires contract != nil
-func (p Parser) Parse(contract *cast.Contract, line string) error {
+func (p Parser) Parse(contract *contract.FuncContract, line string) error {
 	re := regexp.MustCompile("//@(?P<kind>[a-z]+)[\t ]+(?P<expr>[^$]+)")
 	r2 := re.FindAllStringSubmatch(line, -1)
 
@@ -53,10 +53,10 @@ func (p Parser) Parse(contract *cast.Contract, line string) error {
 }
 
 //@requires expr != ""
-func (p Parser) parseRequires(expr string) (cast.Requires, error) {
-	return cast.NewRequires(expr), nil
+func (p Parser) parseRequires(expr string) (contract.Requires, error) {
+	return contract.NewRequires(expr), nil
 }
 
-func (p Parser) parseEnsures(expr string) (cast.Ensures, error) {
-	return cast.NewEnsures(expr), nil
+func (p Parser) parseEnsures(expr string) (contract.Ensures, error) {
+	return contract.NewEnsures(expr), nil
 }
