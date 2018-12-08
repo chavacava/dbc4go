@@ -6,6 +6,7 @@ GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 GOMOD=$(GOCMD) mod
 GOGENERATE=$(GOCMD) generate
+GOLIST=$(GOCMD) list
 
 # Git parameters
 GITCMD=git
@@ -19,7 +20,6 @@ BINARY_NAME=dbc4go
 BINARY_DESTINATION=./bin
 BINARY_PATH=$(BINARY_DESTINATION)/$(BINARY_NAME)
 
-
 # Tagets
 all:	test build
 
@@ -30,8 +30,8 @@ buildwc:
 build:
 		$(GOBUILD) -o $(BINARY_PATH) -v $(SOURCE_ENTRYPOINT)
 # Unit tests
-test:
-		$(GOTEST) -v --cover ./...
+utest:
+		$(GOTEST) -v --cover `$(GOLIST) ./... | grep -v "/examples"`
 clean: 
 		$(GOCLEAN) $(SOURCE_ENTRYPOINT)
 		rm -f $(BINARY_PATH)

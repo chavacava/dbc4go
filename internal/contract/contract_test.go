@@ -12,16 +12,16 @@ func TestConstructor(t *testing.T) {
 	fd := &ast.FuncDecl{}
 	tests := []struct {
 		target *ast.FuncDecl
-		result Contract
+		result FuncContract
 	}{
 		{
 			target: fd,
-			result: Contract{requires: []Requires{}, target: fd},
+			result: FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: fd},
 		},
 	}
 
 	for _, tc := range tests {
-		c := NewContract(tc.target)
+		c := NewFuncContract(tc.target)
 		require.NotNil(t, c)
 		assert.Equal(t, c, tc.result)
 	}
@@ -48,7 +48,7 @@ func TestAddRequires(t *testing.T) {
 		},
 	}
 
-	c := NewContract(&ast.FuncDecl{})
+	c := NewFuncContract(&ast.FuncDecl{})
 	require.NotNil(t, c)
 
 	for _, tc := range tests {
