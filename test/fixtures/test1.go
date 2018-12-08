@@ -1,0 +1,90 @@
+//go:generate dbc4go -i $GOFILE -o $GOFILE
+package contract
+
+import (
+	"go/ast"
+)
+
+// FuncContract represents a contract associated to a function
+type FuncContract struct {
+	requires []Requires
+	ensures  []Ensures
+	target   *ast.FuncDecl
+}
+
+// NewFuncContract creates a FuncContract
+//@requires target != nil
+//@ensures c.target == target
+//@ensures len(c.requires) == 0
+//@ensures len(c.ensures) == 0
+func NewFuncContract(target *ast.FuncDecl) (c FuncContract) {
+	return FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: target}
+}
+
+//@ensures t != nil
+func (c *FuncContract) Target() (t *ast.FuncDecl) {
+	return c.target
+}
+
+// AddRequires adds a requires to this contract
+//@ensures c.requires[len(c.requires)-1] == r
+func (c *FuncContract) AddRequires(r Requires) {
+	c.requires = append(c.requires, r)
+}
+
+// Requires yields requires clauses of this contract
+//@ensures len(r) == len(c.requires)
+func (c *FuncContract) Requires() (r []Requires) {
+	return c.requires
+}
+
+// AddEnsures adds a ensures to this contract
+//@ensures c.ensures[len(c.ensures)-1] == e
+func (c *FuncContract) AddEnsures(e Ensures) {
+	c.ensures = append(c.ensures, e)
+}
+
+// Ensures yields ensures clauses of this contract
+func (c *FuncContract) Ensures() []Ensures {
+	return c.ensures
+}
+
+// Requires is a @requires clause of a contract
+type Requires struct {
+	expr string
+}
+
+// NewRequires creates a Requires object
+//@requires expr != ""
+func NewRequires(expr string) Requires {
+	return Requires{expr: expr}
+}
+
+// ExpandedExpression yields the expanded requires' expression
+func (r Requires) ExpandedExpression() string {
+	return r.expr
+}
+
+func (r Requires) String() string {
+	return "@requires " + r.expr
+}
+
+// Ensures is a @ensures clause of a contract
+type Ensures struct {
+	expr string
+}
+
+// NewEnsures creates a Ensures object
+//@ensures expr != ""
+func NewEnsures(expr string) Ensures {
+	return Ensures{expr: expr}
+}
+
+// ExpandedExpression yields the expanded ensures' expression
+func (r Ensures) ExpandedExpression() string {
+	return r.expr
+}
+
+func (r Ensures) String() string {
+	return "@ensures " + r.expr
+}
