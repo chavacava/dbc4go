@@ -22,7 +22,7 @@ func NewFuncContract(target *ast.FuncDecl) (c FuncContract) {
 }
 
 //@ensures t != nil
-func (c *Contract) Target() (t *ast.FuncDecl) {
+func (c *FuncContract) Target() (t *ast.FuncDecl) {
 	return c.target
 }
 
