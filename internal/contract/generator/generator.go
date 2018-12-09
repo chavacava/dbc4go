@@ -89,7 +89,19 @@ func generateEnsuresCode(clauses []contract.Ensures, fd *ast.FuncDecl) (ast.Stmt
 		funcBody = append(funcBody, astutils.NewIf(expAST, *body))
 	}
 
-	funcCall := astutils.NewCallAnonymous(astutils.CopyFields(fd.Type.Params.List, "old_"), astutils.NewStmtBlock(funcBody...), astutils.ArgsFromFields(fd.Type.Params.List))
+	funcParams := []*ast.Field{}
+	funcArgs := []ast.Expr{}
+	if fd.Type.Params != nil {
+		funcParams = append(funcParams, astutils.CopyFields(fd.Type.Params.List, "old_")...)
+		funcArgs = append(funcArgs, astutils.ArgsFromFields(fd.Type.Params.List)...)
+	}
+	if fd.Recv != nil {
+		funcParams = append(funcParams, astutils.CopyFields(fd.Recv.List, "old_")...)
+		funcArgs = append(funcArgs, astutils.ArgsFromFields(fd.Recv.List)...)
+	}
+
+	funcCall := astutils.NewCallAnonymous(funcParams, astutils.NewStmtBlock(funcBody...), funcArgs)
+
 	return astutils.NewDeferStmt(funcCall), nil
 }
 

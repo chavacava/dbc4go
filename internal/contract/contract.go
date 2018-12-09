@@ -3,6 +3,7 @@ package contract
 
 import (
 	"go/ast"
+	"regexp"
 )
 
 // FuncContract represents a contract associated to a function
@@ -80,9 +81,13 @@ func NewEnsures(expr string) Ensures {
 	return Ensures{expr: expr}
 }
 
+var re4old = regexp.MustCompile(`@old\(([^\)]+)\)`)
+
 // ExpandedExpression yields the expanded ensures' expression
 func (r Ensures) ExpandedExpression() string {
-	return r.expr
+	// replace @old(id.otherId) by old_id.otherId
+
+	return re4old.ReplaceAllString(r.expr, `old_$1`)
 }
 
 func (r Ensures) String() string {
