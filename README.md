@@ -74,32 +74,21 @@ Syntax:
 
 The expression can make reference to any identifier available in the scope at the beginning of the annotated function (for example: function parameters, method receiver, global variables, other functions)
 
+Expressions in `@ensure` clauses can use the `@old` operator to refer to the state of variables as it was just before the execution of the function.
+
 Example:
 
 ```go
 // accelerate the car
 //@requires delta > 0
-//@ensures c.speed > 0
-//@ensures c.speed <= c.maxSpeedKmh
+//@requires c.speed + delta <= c.maxSpeedKmh
+//@ensures c.speed == @old(c.speed)+delta
 func (c *Car) accelerate(delta int) { ... }
 ```
+
+where `@old(c.speed)` refers to the value of `c.speed` at the beginning of the method execution.
 
 ## Planned directives to write contracts
-
-### ==>
-The future implementation of the operator `==>` will allow to write more precise contracts like
-
-```go
-// accelerate the car
-//@requires delta > 0
-//@ensures c.speed + delta >= c.maxSpeedKmh ==> c.speed' == c.maxSpeedKmh 
-//@ensures c.speed + delta < c.maxSpeedKmh ==> c.speed' == c.speed + delta
-func (c *Car) accelerate(delta int) { ... }
-```
-
-where `c.speed'` refers to the value of `c.speed` at the beginning of the method execution.
-
-Notice that until the implementation of the `==>` operator, it is possible to express the same contracts by using canonical forms: `p ==> q` can be written as `!p || q`.
 
 ### `@invariant`
 
@@ -132,3 +121,17 @@ type BankAccount struct {
         // other fields ...
 }
 ```
+
+### ==>
+The future implementation of the operator `==>` will allow to write more precise contracts like
+
+```go
+// accelerate the car
+//@requires delta > 0
+//@ensures @old(c.speed) + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
+//@ensures @old(c.speed) + delta < c.maxSpeedKmh ==> c.speed == @old(c.speed) + delta
+func (c *Car) accelerate(delta int) { ... }
+```
+
+Notice that until the implementation of the `==>` operator, it is possible to express the same contracts by using canonical forms: `p ==> q` can be written as `!p || q`.
+
