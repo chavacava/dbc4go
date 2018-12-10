@@ -153,7 +153,12 @@ func CopyFields(l []*ast.Field, prefix string) (result []*ast.Field) {
 			names = append(names, prefix+n.Name)
 		}
 
-		nf := newField(names, f.Type)
+		fType := f.Type
+		e, ok := f.Type.(*ast.StarExpr)
+		if ok {
+			fType = e.X
+		}
+		nf := newField(names, fType)
 		result = append(result, &nf)
 	}
 
@@ -166,7 +171,14 @@ func ArgsFromFields(l []*ast.Field) (result []ast.Expr) {
 	result = []ast.Expr{}
 	for _, f := range l {
 		for _, n := range f.Names {
-			result = append(result, n)
+
+			arg := ast.Expr(n)
+			_, ok := f.Type.(*ast.StarExpr)
+			if ok {
+				arg = &ast.StarExpr{X: n}
+			}
+
+			result = append(result, arg)
 		}
 	}
 
