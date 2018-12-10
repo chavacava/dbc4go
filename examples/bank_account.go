@@ -21,8 +21,7 @@ func NewBankAccount(initialBalance int) (account BankAccount) {
 // Credit the given amount to the account
 //@requires !a.closed
 //@requires amount > 0 && (a.balance + amount) <= maxBalance
-//@ensures a.balance >= amount && a.balance <= maxBalance
-// TODO: replace previous @ensure clause with: a.balance == @old(a.balance) + amount
+//@ensures a.balance == @old(a.balance) + amount
 // Ensure other fields are unchanged:
 //@ensures !a.closed
 func (a *BankAccount) Credit(amount int) {
@@ -32,8 +31,7 @@ func (a *BankAccount) Credit(amount int) {
 // Debit the given amount from the account
 //@requires !a.closed
 //@requires amount > 0 && (a.balance - amount) >= minBalance
-//@ensures a.balance >= minBalance
-// TODO: replace previous @ensure clause with: a.balance == @old(a.balance) - amount
+//@ensures a.balance == @old(a.balance) - amount
 // Ensure other fields are unchanged:
 //@ensures !a.closed
 func (a *BankAccount) Debit(amount int) {
@@ -42,7 +40,7 @@ func (a *BankAccount) Debit(amount int) {
 
 // Close the account and returns its payout
 //@requires !a.closed
-//TODO: @ensures payout == @old(a.balance)
+//@ensures payout == @old(a.balance)
 //@ensures a.balance == 0
 func (a *BankAccount) Close() (payout int) {
 	// ... implementation ...
@@ -51,8 +49,8 @@ func (a *BankAccount) Close() (payout int) {
 // Balance yields the balance of the account
 //@ensures balance == a.balance
 // Ensure other fields are unchanged:
-// TODO: @ensures a.balance == @old(a.balance)
-// TODO: @ensures a.closed == @old(a.closed)
+//@ensures a.balance == @old(a.balance)
+//@ensures a.closed == @old(a.closed)
 func (a *BankAccount) Balance() (balance int) {
 	// ... implementation ...
 }
