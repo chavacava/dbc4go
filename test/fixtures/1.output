@@ -22,7 +22,7 @@ func NewFuncContract(target *ast.FuncDecl) (c FuncContract) {
 	if !(target != nil) {
 		panic("precondition target != nil not satisfied")
 	}
-	defer func(old_target *ast.FuncDecl) {
+	defer func(old_target ast.FuncDecl) {
 		if !(c.target == target) {
 			panic("postcondition c.target == target not satisfied")
 		}
@@ -32,52 +32,50 @@ func NewFuncContract(target *ast.FuncDecl) (c FuncContract) {
 		if !(len(c.ensures) == 0) {
 			panic("postcondition len(c.ensures) == 0 not satisfied")
 		}
-	}(target)
+	}(*target)
 	return FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: target}
 }
 
 //@ensures t != nil
 func (c *FuncContract) Target() (t *ast.FuncDecl) {
-	defer func() {
+	defer func(old_c FuncContract) {
 		if !(t != nil) {
 			panic("postcondition t != nil not satisfied")
 		}
-	}()
-
+	}(*c)
 	return c.target
 }
 
 // AddRequires adds a requires to this contract
 //@ensures c.requires[len(c.requires)-1] == r
 func (c *FuncContract) AddRequires(r Requires) {
-	defer func(old_r Requires) {
+	defer func(old_r Requires, old_c FuncContract) {
 		if !(c.requires[len(c.requires)-1] == r) {
 			panic("postcondition c.requires[len(c.requires)-1] == r not satisfied")
 		}
-	}(r)
+	}(r, *c)
 	c.requires = append(c.requires, r)
 }
 
 // Requires yields requires clauses of this contract
 //@ensures len(r) == len(c.requires)
 func (c *FuncContract) Requires() (r []Requires) {
-	defer func() {
+	defer func(old_c FuncContract) {
 		if !(len(r) == len(c.requires)) {
 			panic("postcondition len(r) == len(c.requires) not satisfied")
 		}
-	}()
-
+	}(*c)
 	return c.requires
 }
 
 // AddEnsures adds a ensures to this contract
 //@ensures c.ensures[len(c.ensures)-1] == e
 func (c *FuncContract) AddEnsures(e Ensures) {
-	defer func(old_e Ensures) {
+	defer func(old_e Ensures, old_c FuncContract) {
 		if !(c.ensures[len(c.ensures)-1] == e) {
 			panic("postcondition c.ensures[len(c.ensures)-1] == e not satisfied")
 		}
-	}(e)
+	}(e, *c)
 	c.ensures = append(c.ensures, e)
 }
 
