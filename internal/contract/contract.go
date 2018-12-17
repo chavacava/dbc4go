@@ -22,12 +22,14 @@ func NewFuncContract(target *ast.FuncDecl) (c FuncContract) {
 	return FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: target}
 }
 
+//Target yields the function declaration to which this contract is attached to
 //@ensures t != nil
 func (c *FuncContract) Target() (t *ast.FuncDecl) {
 	return c.target
 }
 
 // AddRequires adds a requires to this contract
+//@ensures len(c.requires) == len(@old(r.requires)) + 1
 //@ensures c.requires[len(c.requires)-1] == r
 func (c *FuncContract) AddRequires(r Requires) {
 	c.requires = append(c.requires, r)
@@ -40,13 +42,15 @@ func (c *FuncContract) Requires() (r []Requires) {
 }
 
 // AddEnsures adds a ensures to this contract
+//@ensures len(c.ensures) == len(@old(c.ensures)) + 1
 //@ensures c.ensures[len(c.ensures)-1] == e
 func (c *FuncContract) AddEnsures(e Ensures) {
 	c.ensures = append(c.ensures, e)
 }
 
 // Ensures yields ensures clauses of this contract
-func (c *FuncContract) Ensures() []Ensures {
+//@ensures len(r) == len(c.ensures)
+func (c *FuncContract) Ensures() (r []Ensures) {
 	return c.ensures
 }
 

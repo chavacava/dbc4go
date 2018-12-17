@@ -96,7 +96,8 @@ func NewStringLit(v string) *ast.BasicLit {
 }
 
 // NewStmtBlock yields a slice of statements
-func NewStmtBlock(stmts ...ast.Stmt) *ast.BlockStmt {
+//@ensures len(r.List) == len(stmts)
+func NewStmtBlock(stmts ...ast.Stmt) (r *ast.BlockStmt) {
 	stmtList := append([]ast.Stmt{}, stmts...)
 	return &ast.BlockStmt{Lbrace: 0, List: stmtList, Rbrace: 0}
 }
@@ -131,8 +132,10 @@ func NewCallExpr(function *ast.Expr, params []ast.Expr) *ast.CallExpr {
 	}
 }
 
-func newField(names []string, t ast.Expr) ast.Field {
-	r := ast.Field{}
+//@ensures len(r.Names) == len(names)
+//@ensures r.Type == t 
+func newField(names []string, t ast.Expr) (r ast.Field) {
+	r = ast.Field{}
 	r.Names = []*ast.Ident{}
 	for _, n := range names {
 		id := NewID(n)

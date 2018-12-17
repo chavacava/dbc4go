@@ -57,8 +57,10 @@ func generateCode(c *contract.FuncContract) (stmts []ast.Stmt, errs []error) {
 	return result, errs
 }
 
-func generateRequiresCode(r contract.Requires) (ast.Stmt, error) {
-	exp := r.ExpandedExpression()
+// must ensure r == nil => e != nil
+//@ensure r != nil || e != nil
+func generateRequiresCode(req contract.Requires) (r ast.Stmt, e error) {
+	exp := req.ExpandedExpression()
 	expAST, err := parser.ParseExpr("!(" + exp + ")")
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to parse expression '%s'", exp)
@@ -72,7 +74,10 @@ func generateRequiresCode(r contract.Requires) (ast.Stmt, error) {
 	return astutils.NewIf(expAST, *body), nil
 }
 
-func generateEnsuresCode(clauses []contract.Ensures, fd *ast.FuncDecl) (ast.Stmt, error) {
+//@requires fd != nil
+//@requires len(clauses) > 0
+//@ensure r != nil || e != nil
+func generateEnsuresCode(clauses []contract.Ensures, fd *ast.FuncDecl) (r ast.Stmt, e error) {
 	funcBody := []ast.Stmt{}
 
 	for _, clause := range clauses {
@@ -110,7 +115,9 @@ func escapeDoubleQuotes(str string) (r string) {
 	return strings.Replace(str, "\"", "\\\"", -1)
 }
 
+//@requires inputFilename != "" && outputFilename != ""
 func GenerateCode(inputFilename, outputFilename string) error {
+	// simplify analyzeCode by just setting inputFilename
 	inputSourceCode, err := ioutil.ReadFile(inputFilename)
 	if err != nil {
 		return errors.Wrap(err, "unable to open input file")
@@ -193,7 +200,8 @@ func (fr *fileRewriter) positionAsString(pos token.Pos) string {
 
 // rewriteFuncDecl is in charge of generating contract-enforcing code for functions
 //@requires fd != nil
-func (fr *fileRewriter) rewriteFuncDecl(fd *ast.FuncDecl) *ast.FuncDecl {
+//@ensures r != nil
+func (fr *fileRewriter) rewriteFuncDecl(fd *ast.FuncDecl) (r *ast.FuncDecl) {
 	if fd.Doc == nil {
 		return fd // nothing to do, the function does not have a comment
 	}

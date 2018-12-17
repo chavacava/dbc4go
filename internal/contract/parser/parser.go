@@ -57,6 +57,7 @@ func (p Parser) parseRequires(expr string) (contract.Requires, error) {
 	return contract.NewRequires(expr), nil
 }
 
+//@requires expr != ""
 func (p Parser) parseEnsures(expr string) (contract.Ensures, error) {
 	return contract.NewEnsures(expr), nil
 }
