@@ -1,6 +1,6 @@
 # dbc4go
 
-Design by Contract&trade; for GO is a code generator that takes GO code annotated with contracts and generates code that enforces those contracts.  
+[Design by Contract&trade;](https://en.wikipedia.org/wiki/Design_by_contract) for GO is a code generator that takes GO code annotated with contracts and generates code that enforces those contracts.  
 
 Contracts are embedded into comments, therefore code annotated with contracts is valid GO code.
 
