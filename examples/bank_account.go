@@ -5,13 +5,14 @@ const (
 	minBalance = 0
 )
 
+// BankAccount represents a bank account
 type BankAccount struct {
 	balance int  // the balance of the account
 	closed  bool // is the account closed?
 }
 
 // NewBankAccount creates an account with the given initial balance
-//@requires initialBalance >= 0 && initialBalance <= maxBalance
+//@requires initialBalance >= minBalance && initialBalance <= maxBalance
 //@ensures account.balance == initialBalance
 //@ensures !account.closed
 func NewBankAccount(initialBalance int) (account BankAccount) {
