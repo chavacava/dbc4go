@@ -58,7 +58,7 @@ func generateCode(c *contract.FuncContract) (stmts []ast.Stmt, errs []error) {
 }
 
 // must ensure r == nil => e != nil
-//@ensure r != nil || e != nil
+//@ensures r != nil || e != nil
 func generateRequiresCode(req contract.Requires) (r ast.Stmt, e error) {
 	exp := req.ExpandedExpression()
 	expAST, err := parser.ParseExpr("!(" + exp + ")")
@@ -76,7 +76,7 @@ func generateRequiresCode(req contract.Requires) (r ast.Stmt, e error) {
 
 //@requires fd != nil
 //@requires len(clauses) > 0
-//@ensure r != nil || e != nil
+//@ensures r != nil || e != nil
 func generateEnsuresCode(clauses []contract.Ensures, fd *ast.FuncDecl) (r ast.Stmt, e error) {
 	funcBody := []ast.Stmt{}
 
