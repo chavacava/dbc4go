@@ -88,6 +88,17 @@ func (c *Car) accelerate(delta int) { ... }
 
 where `@old(c.speed)` refers to the value of `c.speed` at the beginning of the method execution.
 
+### The ==> operator
+The `==>` operator (implication) allows to write more precise and concise contracts like
+
+```go
+// accelerate the car
+//@requires delta > 0
+//@ensures @old(c.speed) + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
+//@ensures @old(c.speed) + delta < c.maxSpeedKmh ==> c.speed == @old(c.speed) + delta
+func (c *Car) accelerate(delta int) { ... }
+```
+
 ## Planned directives to write contracts
 
 ### `@invariant`
@@ -121,17 +132,3 @@ type BankAccount struct {
         // other fields ...
 }
 ```
-
-### ==>
-The future implementation of the operator `==>` will allow to write more precise contracts like
-
-```go
-// accelerate the car
-//@requires delta > 0
-//@ensures @old(c.speed) + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
-//@ensures @old(c.speed) + delta < c.maxSpeedKmh ==> c.speed == @old(c.speed) + delta
-func (c *Car) accelerate(delta int) { ... }
-```
-
-Notice that until the implementation of the `==>` operator, it is possible to express the same contracts by using canonical forms: `p ==> q` can be written as `!p || q`.
-
