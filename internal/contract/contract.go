@@ -67,7 +67,7 @@ func NewRequires(expr string) Requires {
 
 // ExpandedExpression yields the expanded requires' expression
 func (r Requires) ExpandedExpression() string {
-	return r.expr
+	return rewriteImpliesExpr(r.expr)
 }
 
 func (r Requires) String() string {
@@ -89,11 +89,27 @@ var re4old = regexp.MustCompile(`@old\(([^\)]+)\)`)
 
 // ExpandedExpression yields the expanded ensures' expression
 func (r Ensures) ExpandedExpression() string {
-	// replace @old(id.otherId) by old_id.otherId
+	expr := rewriteImpliesExpr(r.expr)
 
-	return re4old.ReplaceAllString(r.expr, `old_$1`)
+	// replace @old(id.otherId) by old_id.otherId
+	return re4old.ReplaceAllString(expr, `old_$1`)
 }
 
 func (r Ensures) String() string {
 	return "@ensures " + r.expr
+}
+
+var reImplies = regexp.MustCompile(`(.*)==>(.*)`)
+
+// rewriteImpliesExpr transforms p ==> q into its canonical form !p || q
+func rewriteImpliesExpr(expr string) string {
+	impExp := reImplies.FindAllStringSubmatch(expr, -1)
+	if impExp == nil {
+		return expr // no ==> operator in the expression, nothing to do
+	}
+
+	p := impExp[0][1]
+	q := impExp[0][2]
+
+	return "!(" + p + ") || (" + q + ")"
 }

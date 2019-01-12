@@ -17,11 +17,12 @@ func NewParser() Parser {
 	return Parser{}
 }
 
+var reContracts = regexp.MustCompile("//@(?P<kind>[a-z]+)[\t ]+(?P<expr>[^$]+)")
+
 // Parse enrich the Contract with the clause if present in the given comment line
 //@requires contract != nil
 func (p Parser) Parse(contract *contract.FuncContract, line string) error {
-	re := regexp.MustCompile("//@(?P<kind>[a-z]+)[\t ]+(?P<expr>[^$]+)")
-	r2 := re.FindAllStringSubmatch(line, -1)
+	r2 := reContracts.FindAllStringSubmatch(line, -1)
 
 	if r2 == nil {
 		return nil // nothing to do, there is no contract in this comment line

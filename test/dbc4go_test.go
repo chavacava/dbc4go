@@ -20,6 +20,10 @@ func TestDBC4GO(t *testing.T) {
 			input:     "./fixtures/1.input",
 			expOutput: "./fixtures/1.output",
 		},
+		{
+			input:     "./fixtures/2.input",
+			expOutput: "./fixtures/2.output",
+		},
 	}
 
 	tmpDir, err := ioutil.TempDir("/tmp", "testing-dbc4go")
