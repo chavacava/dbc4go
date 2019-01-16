@@ -31,7 +31,7 @@ build:
 		$(GOBUILD) -o $(BINARY_PATH) -v $(SOURCE_ENTRYPOINT)
 # Unit tests
 utest:
-		$(GOTEST) -v --cover `$(GOLIST) ./... | grep -v "/examples"`
+		$(GOTEST) --cover `$(GOLIST) ./... | grep -v "/examples"`
 clean: 
 		$(GOCLEAN) $(SOURCE_ENTRYPOINT)
 		rm -f $(BINARY_PATH)
