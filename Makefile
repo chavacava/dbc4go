@@ -32,6 +32,10 @@ build:
 # Unit tests
 utest:
 		$(GOTEST) --cover `$(GOLIST) ./... | grep -v "/examples"`
+utestwc:
+		$(GOGENERATE) ./...
+		$(GOTEST) --cover `$(GOLIST) ./... | grep -v "/examples"`
+		$(GITCHECKOUT) -- .
 clean: 
 		$(GOCLEAN) $(SOURCE_ENTRYPOINT)
 		rm -f $(BINARY_PATH)
