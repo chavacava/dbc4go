@@ -4,6 +4,7 @@ package contract
 import (
 	"go/ast"
 	"regexp"
+	"strings"
 )
 
 // FuncContract represents a contract associated to a function
@@ -23,7 +24,7 @@ func NewFuncContract(target *ast.FuncDecl) (c FuncContract) {
 }
 
 //Target yields the function declaration to which this contract is attached to
-//@ensures t != nil
+//@ensures t == c.target
 func (c *FuncContract) Target() (t *ast.FuncDecl) {
 	return c.target
 }
@@ -108,8 +109,8 @@ func rewriteImpliesExpr(expr string) string {
 		return expr // no ==> operator in the expression, nothing to do
 	}
 
-	p := impExp[0][1]
-	q := impExp[0][2]
+	p := strings.Trim(impExp[0][1], " ")
+	q := strings.Trim(impExp[0][2], " ")
 
 	return "!(" + p + ") || (" + q + ")"
 }
