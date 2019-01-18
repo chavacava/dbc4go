@@ -3,24 +3,30 @@ package contract
 
 import (
 	"go/ast"
+	"go/token"
 	"regexp"
 	"strings"
+
+	"golang.org/x/tools/go/ast/astutil"
 )
 
 // FuncContract represents a contract associated to a function
 type FuncContract struct {
 	requires []Requires
 	ensures  []Ensures
+	imports  map[string]struct{}
 	target   *ast.FuncDecl
+	file     *ast.File
 }
 
 // NewFuncContract creates a FuncContract
 //@requires target != nil
-//@ensures c.target == target
+//@ensures c.target == @old(target)
 //@ensures len(c.requires) == 0
 //@ensures len(c.ensures) == 0
-func NewFuncContract(target *ast.FuncDecl) (c FuncContract) {
-	return FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: target}
+//@ensures len(c.imports) == 0
+func NewFuncContract(target *ast.FuncDecl, file *ast.File) (c FuncContract) {
+	return FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: target, file: file}
 }
 
 //Target yields the function declaration to which this contract is attached to
@@ -113,4 +119,16 @@ func rewriteImpliesExpr(expr string) string {
 	q := strings.Trim(impExp[0][2], " ")
 
 	return "!(" + p + ") || (" + q + ")"
+}
+
+// AddImport adds an import to this contract
+func (c *FuncContract) AddImport(path string) {
+	fSet := token.NewFileSet()
+
+	astutil.AddImport(fSet, c.file, strings.Trim(path, "\""))
+}
+
+// Imports returns imports required by this contract
+func (c *FuncContract) Imports() map[string]struct{} {
+	return map[string]struct{}{}
 }

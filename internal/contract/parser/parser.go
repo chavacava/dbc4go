@@ -46,11 +46,24 @@ func (p Parser) Parse(contract *contract.FuncContract, line string) error {
 		}
 
 		contract.AddEnsures(clause)
+	case "import":
+		println(">>>> IMPORT found!")
+		clause, err := p.parseImport(expr)
+		if err != nil {
+			return errors.Wrap(err, "invalid @import clause")
+		}
+
+		contract.AddImport(clause)
 	default:
 		return errors.Errorf("unknown contract kind %s", kind)
 	}
 
 	return nil
+}
+
+//@requires path != ""
+func (p Parser) parseImport(path string) (string, error) {
+	return path, nil
 }
 
 //@requires expr != ""

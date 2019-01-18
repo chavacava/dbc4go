@@ -16,7 +16,7 @@ func TestConstructor(t *testing.T) {
 	}{
 		{
 			target: fd,
-			result: FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: fd},
+			result: FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: fd, imports: map[string]struct{}{}},
 		},
 	}
 
