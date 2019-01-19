@@ -17,7 +17,7 @@ type FuncContract struct {
 
 // NewFuncContract creates a FuncContract
 //@requires target != nil
-//@ensures c.target == @old(target)
+//@ensures c.target == target
 //@ensures len(c.requires) == 0
 //@ensures len(c.ensures) == 0
 //@ensures len(c.imports) == 0
