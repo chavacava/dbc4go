@@ -5,3 +5,6 @@ script:
 - make utest
 - make buildwc
 - make utestwc
+env:
+  global:
+  - GO111MODULE: on
