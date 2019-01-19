@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/chavacava/dbc4go.svg?branch=master)](https://travis-ci.com/chavacava/dbc4go)
+
 # dbc4go
 
 [Design by Contract&trade;](https://en.wikipedia.org/wiki/Design_by_contract) for GO is a code generator that takes GO code annotated with contracts and generates code that enforces those contracts.  
