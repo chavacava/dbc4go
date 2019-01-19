@@ -47,7 +47,6 @@ func (p Parser) Parse(contract *contract.FuncContract, line string) error {
 
 		contract.AddEnsures(clause)
 	case "import":
-		println(">>>> IMPORT found!")
 		clause, err := p.parseImport(expr)
 		if err != nil {
 			return errors.Wrap(err, "invalid @import clause")
