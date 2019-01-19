@@ -99,6 +99,23 @@ The `==>` operator (implication) allows to write more precise and concise contra
 func (c *Car) accelerate(delta int) { ... }
 ```
 
+### `@import`
+
+If in your contracts you need to use a package that is not imported by the original source code, then you can import the package with the `@import` clause.
+
+Syntax:
+
+`@import` _pakage name_
+
+Example:
+
+```go
+// Add element e to container
+//@import strings
+//@requires strings.HasPrefix(e, "my")
+func (c *Container) Add(e string) { ... }
+```
+
 ## Planned directives to write contracts
 
 ### `@invariant`
