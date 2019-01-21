@@ -74,7 +74,7 @@ func generateRequiresCode(req contract.Requires) (r ast.Stmt, e error) {
 
 //@requires fd != nil
 //@requires len(clauses) > 0
-//@ensure r == nil ==> e != nil
+//@ensures r == nil ==> e != nil
 func generateEnsuresCode(clauses []contract.Ensures, fd *ast.FuncDecl) (r ast.Stmt, e error) {
 	funcBody := []ast.Stmt{}
 
