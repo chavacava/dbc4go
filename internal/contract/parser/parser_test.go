@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"go/ast"
 	"testing"
 
 	"github.com/chavacava/dbc4go/internal/contract"
@@ -83,7 +84,7 @@ func TestParseEnsures(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	c := contract.NewFuncContract(nil)
+	c := contract.NewFuncContract(&ast.FuncDecl{})
 	tests := []struct {
 		line     string
 		contract contract.FuncContract
