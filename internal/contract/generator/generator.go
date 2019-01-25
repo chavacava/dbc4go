@@ -8,9 +8,8 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
+	"io"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 
@@ -74,7 +73,7 @@ func generateRequiresCode(req contract.Requires) (r ast.Stmt, e error) {
 
 //@requires fd != nil
 //@requires len(clauses) > 0
-//@ensure r == nil ==> e != nil
+//@ensures r == nil ==> e != nil
 func generateEnsuresCode(clauses []contract.Ensures, fd *ast.FuncDecl) (r ast.Stmt, e error) {
 	funcBody := []ast.Stmt{}
 
@@ -114,29 +113,12 @@ func escapeDoubleQuotes(str string) (r string) {
 }
 
 // GenerateCode produces the contract enforcing code for the given source file
-//@requires inputFilename != "" && outputFilename != ""
-func GenerateCode(inputFilename, outputFilename string) error {
-	// simplify analyzeCode by just setting inputFilename
-	inputSourceCode, err := ioutil.ReadFile(inputFilename)
-	if err != nil {
-		return errors.Wrap(err, "unable to open input file")
-	}
-	buf, err := analyzeCode(inputSourceCode, inputFilename)
+func GenerateCode(input io.Reader, output io.Writer) error {
+	// simplify analyzeCode by just setting input
+
+	buf, err := analyzeCode(input)
 	if err != nil {
 		return errors.Wrap(err, "unable to analyze input source code")
-	}
-
-	output := os.Stdout
-
-	if outputFilename != "" {
-		var err error
-		output, err = os.Create(outputFilename)
-		if err != nil {
-			return errors.Wrapf(err, "unable to create output file '%s'", outputFilename)
-		}
-		defer output.Close()
-
-		log.Printf("Generating file '%s'", outputFilename)
 	}
 
 	_, err = fmt.Fprintf(output, "%s", buf.Bytes())
@@ -147,9 +129,9 @@ func GenerateCode(inputFilename, outputFilename string) error {
 	return nil
 }
 
-func analyzeCode(src []byte, fileName string) (bytes.Buffer, error) {
+func analyzeCode(src io.Reader) (bytes.Buffer, error) {
 	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, fileName, src, parser.ParseComments)
+	file, err := parser.ParseFile(fset, "", src, parser.ParseComments)
 	if err != nil {
 		return bytes.Buffer{}, fmt.Errorf("could not parse code: %v", err)
 	}
