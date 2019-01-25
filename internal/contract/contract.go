@@ -1,5 +1,7 @@
-//go:generate dbc4go -i $GOFILE -o $GOFILE
+// Package contract provides contract related objects
 package contract
+
+//go:generate dbc4go -i $GOFILE -o $GOFILE
 
 import (
 	"go/ast"

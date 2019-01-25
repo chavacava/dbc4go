@@ -133,7 +133,7 @@ func NewCallExpr(function *ast.Expr, params []ast.Expr) *ast.CallExpr {
 }
 
 //@ensures len(r.Names) == len(names)
-//@ensures r.Type == t 
+//@ensures r.Type == t
 func newField(names []string, t ast.Expr) (r ast.Field) {
 	r = ast.Field{}
 	r.Names = []*ast.Ident{}
@@ -174,7 +174,6 @@ func ArgsFromFields(l []*ast.Field) (result []ast.Expr) {
 	result = []ast.Expr{}
 	for _, f := range l {
 		for _, n := range f.Names {
-
 			arg := ast.Expr(n)
 			_, ok := f.Type.(*ast.StarExpr)
 			if ok {

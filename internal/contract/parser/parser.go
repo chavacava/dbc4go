@@ -1,5 +1,7 @@
-//go:generate dbc4go -i $GOFILE -o $GOFILE
+// Package parser implements contract parsing
 package parser
+
+//go:generate dbc4go -i $GOFILE -o $GOFILE
 
 import (
 	"regexp"

@@ -2,6 +2,7 @@ package examples
 
 // This is an example on how to enforce the use of a struct constructor
 
+// MyObject is a dummy struct
 type MyObject struct {
 
 	// ... struct fields ...
