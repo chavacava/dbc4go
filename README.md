@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.com/chavacava/dbc4go.svg?branch=master)](https://travis-ci.com/chavacava/dbc4go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/chavacava/dbc4go)](https://goreportcard.com/report/github.com/chavacava/dbc4go)
 
 # dbc4go
 
