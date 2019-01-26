@@ -8,6 +8,16 @@ Contracts are embedded into comments, therefore code annotated with contracts is
 
 This project uses contracts itself! Check the source code and the `Makefile` to see how.
 
+# Usage
+
+```
+Usage of dbc4go:
+  -i string
+        input source file (defaults to stdin)
+  -o string
+        output file (defaults to stdout)
+```
+
 # Current State
 
 This project is in a pre-ALPHA state.
