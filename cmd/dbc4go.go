@@ -13,22 +13,21 @@ import (
 )
 
 func main() {
-	iFilename := flag.String("i", "", "input source file")
-	oFilename := flag.String("o", "", "output file (defaults to stdout")
+	iFilename := flag.String("i", "", "input source file (defaults to stdin)")
+	oFilename := flag.String("o", "", "output file (defaults to stdout)")
 	flag.Parse()
 
 	inputFilename := *iFilename
 	outputFilename := *oFilename
 
-	if inputFilename == "" {
-		log.Fatal("Undefined input file, please set the flag -i")
+	input := os.Stdin
+	if inputFilename != "" {
+		var err error
+		input, err = os.Open(inputFilename)
+		if err != nil {
+			log.Fatalf("Unable to open input file: %v", err)
+		}
 	}
-
-	input, err := os.Open(inputFilename)
-	if err != nil {
-		log.Fatalf("Unable to open input file: %v", err)
-	}
-
 	output := os.Stdout
 
 	if outputFilename != "" {
@@ -55,7 +54,7 @@ func main() {
 		log.Printf("Generating file '%s'", *oFilename)
 	}
 
-	err = generator.GenerateCode(input, output)
+	err := generator.GenerateCode(input, output)
 	input.Close()
 	if err != nil {
 		log.Fatalf("Unable to generate code: %v", err)
