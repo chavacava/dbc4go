@@ -161,6 +161,12 @@ func CopyFields(l []*ast.Field, prefix string) (result []*ast.Field) {
 		if ok {
 			fType = e.X
 		}
+
+		ellip, ok := f.Type.(*ast.Ellipsis)
+		if ok {
+			fType = &ast.ArrayType{Elt: ellip.Elt}
+		}
+
 		nf := newField(names, fType)
 		result = append(result, &nf)
 	}
