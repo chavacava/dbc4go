@@ -54,8 +54,7 @@ func generateCode(c *contract.FuncContract) (stmts []ast.Stmt, imports map[strin
 	return result, c.Imports(), errs
 }
 
-// must ensure r == nil => e != nil
-//@ensures r != nil || e != nil
+//@ensures  r == nil ==> e != nil
 func generateRequiresCode(req contract.Requires) (r ast.Stmt, e error) {
 	exp := req.ExpandedExpression()
 	expAST, err := parser.ParseExpr("!(" + exp + ")")
