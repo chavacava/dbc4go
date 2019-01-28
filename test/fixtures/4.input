@@ -1,0 +1,11 @@
+package astutils
+
+import (
+	"go/ast"
+	"go/token"
+)
+
+//@ensures len(args) == len(r)
+func NewCallArgs(args ...ast.Expr) (r []ast.Expr) {
+	return append([]ast.Expr{}, args...)
+}
