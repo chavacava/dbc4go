@@ -5,6 +5,13 @@
 
 [Design by Contract&trade;](https://en.wikipedia.org/wiki/Design_by_contract) for GO is a code generator that takes GO code annotated with contracts and generates code that enforces those contracts.  
 
+<p align="center">
+  <img src="./assets/mascots.jpg" alt="" width="300">
+  <br>
+  Logo by Eze
+</p>
+
+
 Contracts are embedded into comments, therefore code annotated with contracts is valid GO code.
 
 This project uses contracts itself! Check the source code and the `Makefile` to see how.
