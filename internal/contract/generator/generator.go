@@ -59,7 +59,7 @@ func analyzeCode(src io.Reader) (bytes.Buffer, error) {
 	}
 
 	fa := fileAnalyzer{decorator: dec, imports: importsContainer{}}
-
+	// walk the AST with the analyzer to find contracts and generate their contracts
 	ast.Walk(fa, astFile)
 
 	fset, astFile, err = decorator.RestoreFile(dstFile)
@@ -67,6 +67,7 @@ func analyzeCode(src io.Reader) (bytes.Buffer, error) {
 		return bytes.Buffer{}, fmt.Errorf("unable to generate new code: %v", err)
 	}
 
+	// add imports required by contracts
 	for k := range fa.imports {
 		astutil.AddImport(fset, astFile, k)
 	}
@@ -87,7 +88,17 @@ func analyzeCode(src io.Reader) (bytes.Buffer, error) {
 	buf.Reset()
 	buf.WriteString(finalCode)
 
-	// TODO re-parse file to check for errors in generated code
+	// re-parse file to check for errors in generated code
+	resultFile, err := parser.ParseFile(fset, "", &buf, parser.ParseComments)
+	if err != nil {
+		return bytes.Buffer{}, fmt.Errorf("found error in generated code, please check contracts: %v", err)
+	}
+
+	// format generated code
+	buf.Reset()
+	if err := format.Node(&buf, fset, resultFile); err != nil {
+		return bytes.Buffer{}, fmt.Errorf("unable to format the generated code: %v", err)
+	}
 
 	return buf, nil
 }
@@ -164,7 +175,7 @@ func (fa fileAnalyzer) generateCode(c *contract.FuncContract) (stmts []string, e
 	}
 
 	if len(c.Ensures()) > 0 {
-		stmt := generateEnsuresCode(c.Ensures(), c.Target())
+		stmt := fa.generateEnsuresCode(c.Ensures(), c.Target())
 		result = append(result, stmt)
 	}
 
@@ -184,34 +195,42 @@ func (fa fileAnalyzer) generateRequiresCode(req contract.Requires) (r string, e 
 	exp := req.ExpandedExpression()
 
 	r = strings.Replace(templateRequire, "%cond%", exp, 1)
-	r = strings.Replace(r, "%contract%", req.String(), 1)
+	r = strings.Replace(r, "%contract%", escapeDoubleQuotes(req.String()), 1)
 
 	return r, nil
 }
 
 //@requires fd != nil
 //@requires len(clauses) > 0
-func generateEnsuresCode(clauses []contract.Ensures, fd *ast.FuncDecl) (r string) {
+func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.FuncDecl) (r string) {
 	const templateEnsure = commentPrefix + `if !(%cond%) { panic("postcondition %contract% not satisfied") }`
 
 	ensuresCode := make([]string, len(clauses))
 	for _, clause := range clauses {
 		exp := clause.ExpandedExpression()
 		ensure := strings.Replace(templateEnsure, "%cond%", exp, 1)
-		ensure = strings.Replace(ensure, "%contract%", clause.String(), 1)
+		ensure = strings.Replace(ensure, "%contract%", escapeDoubleQuotes(clause.String()), 1)
 		ensuresCode = append(ensuresCode, ensure)
 	}
 
 	funcParams := []string{}
 	funcArgs := []string{}
 
+	const oldPrefix = "old_"
 	if fd.Type.Params != nil {
-		const oldPrefix = "old_"
 		for _, param := range fd.Type.Params.List {
 			paramID := param.Names[0].String()
-			funcParams = append(funcParams, fmt.Sprintf("%s %v\n", oldPrefix+paramID, param.Type))
+
+			funcParams = append(funcParams, fmt.Sprintf("%s %s", oldPrefix+paramID, fa.typeAsString(param.Type)))
 			funcArgs = append(funcArgs, paramID)
 		}
+	}
+
+	hasReceiver := fd.Recv != nil && len(fd.Recv.List) > 0 && fd.Recv.List[0].Names[0].String() != "_"
+	if hasReceiver {
+		receiverID := fd.Recv.List[0].Names[0].String()
+		funcParams = append(funcParams, fmt.Sprintf("%s %s", oldPrefix+receiverID, fa.typeAsString(fd.Recv.List[0].Type)))
+		funcArgs = append(funcArgs, receiverID)
 	}
 
 	const templateDeferredFunction = commentPrefix + `defer func(%params%){%checks%}(%args%)`
@@ -221,4 +240,15 @@ func generateEnsuresCode(clauses []contract.Ensures, fd *ast.FuncDecl) (r string
 	r = strings.Replace(r, "%args%", strings.Join(funcArgs, ","), 1)
 
 	return r
+}
+
+func (fa fileAnalyzer) typeAsString(n ast.Node) string {
+	switch n := n.(type) {
+	case *ast.StarExpr:
+		return "*" + fa.typeAsString(n.X)
+	case *ast.SelectorExpr:
+		return fmt.Sprintf("%v", n.X) + "." + fa.typeAsString(n.Sel)
+	default:
+		return fmt.Sprintf("%v", n)
+	}
 }
