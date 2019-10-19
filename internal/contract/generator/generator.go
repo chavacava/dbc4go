@@ -153,7 +153,6 @@ func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
 
 	dstFuncDecl := fa.decorator.Dst.Nodes[fd].(*dst.FuncDecl)
 	dstFuncDecl.Body.Decorations().Start.Append(contractStmts...)
-	//dstFuncDecl.Body.Decorations().Start.Prepend(commentPrefix + "\n")
 
 	return
 }
