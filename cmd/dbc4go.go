@@ -1,4 +1,3 @@
-//go:generate dbc4go -i $GOFILE -o $GOFILE
 package main
 
 import (
