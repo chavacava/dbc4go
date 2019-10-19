@@ -249,6 +249,8 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.F
 //@ensures r != ""
 func (fa fileAnalyzer) typeAsString(n ast.Node) (r string) {
 	switch n := n.(type) {
+	case *ast.ArrayType:
+		return "[]" + fa.typeAsString(n.Elt)
 	case *ast.Ellipsis:
 		return "..." + fa.typeAsString(n.Elt)
 	case *ast.StarExpr:
