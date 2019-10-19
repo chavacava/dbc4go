@@ -153,7 +153,7 @@ func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
 
 	dstFuncDecl := fa.decorator.Dst.Nodes[fd].(*dst.FuncDecl)
 	dstFuncDecl.Body.Decorations().Start.Append(contractStmts...)
-	dstFuncDecl.Body.Decorations().Start.Prepend(commentPrefix + "\n")
+	//dstFuncDecl.Body.Decorations().Start.Prepend(commentPrefix + "\n")
 
 	return
 }
@@ -250,6 +250,8 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.F
 //@ensures r != ""
 func (fa fileAnalyzer) typeAsString(n ast.Node) (r string) {
 	switch n := n.(type) {
+	case *ast.Ellipsis:
+		return "..." + fa.typeAsString(n.Elt)
 	case *ast.StarExpr:
 		return "*" + fa.typeAsString(n.X)
 	case *ast.SelectorExpr:
