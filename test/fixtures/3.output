@@ -10,16 +10,12 @@ import (
 //@ensures a==0 ==> r==0
 //@import "strings"
 func bar(a int, b int) (r int) {
-	if !(!(a > 0) ||
-
-		(b > 0)) {
-		panic("precondition !(a > 0) || (b > 0) not satisfied")
+	if !(!(a > 0) || (b > 0)) {
+		panic("precondition @requires a > 0 ==> b > 0 not satisfied")
 	}
 	defer func(old_a int, old_b int) {
-		if !(!(a == 0) ||
-
-			(r == 0)) {
-			panic("postcondition !(a==0) || (r==0) not satisfied")
+		if !(!(a == 0) || (r == 0)) {
+			panic("postcondition @ensures a==0 ==> r==0 not satisfied")
 		}
 	}(a, b)
 	return a
@@ -29,9 +25,8 @@ func bar(a int, b int) (r int) {
 //@import strings
 func bar2(a int) (r int) {
 	defer func(old_a int) {
-		if !(!(old_a == 0) ||
-			(r == 0)) {
-			panic("postcondition !(old_a==0) || (r==0) not satisfied")
+		if !(!(old_a == 0) || (r == 0)) {
+			panic("postcondition @ensures @old(a)==0 ==> r==0 not satisfied")
 		}
 	}(a)
 	return a

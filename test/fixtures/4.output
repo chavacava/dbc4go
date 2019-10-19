@@ -8,9 +8,9 @@ import (
 
 //@ensures len(args) == len(r)
 func NewCallArgs(args ...ast.Expr) (r []ast.Expr) {
-	defer func(old_args []ast.Expr) {
+	defer func(old_args ...ast.Expr) {
 		if !(len(args) == len(r)) {
-			panic("postcondition len(args) == len(r) not satisfied")
+			panic("postcondition @ensures len(args) == len(r) not satisfied")
 		}
 	}(args)
 	return append([]ast.Expr{}, args...)
