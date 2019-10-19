@@ -30,8 +30,6 @@ func escapeDoubleQuotes(str string) (r string) {
 
 // GenerateCode produces the contract enforcing code for the given source file
 func GenerateCode(input io.Reader, output io.Writer) error {
-	// simplify analyzeCode by just setting input
-
 	buf, err := analyzeCode(input)
 	if err != nil {
 		return errors.Wrap(err, "unable to analyze input source code")
@@ -45,7 +43,9 @@ func GenerateCode(input io.Reader, output io.Writer) error {
 	return nil
 }
 
-func analyzeCode(src io.Reader) (bytes.Buffer, error) {
+//@ensures len(r) == 0 ==> err != nil
+//TODO(chavacava) how to ensure that r is valid Go code?
+func analyzeCode(src io.Reader) (r bytes.Buffer, err error) {
 	fset := token.NewFileSet()
 	astFile, err := parser.ParseFile(fset, "", src, parser.ParseComments)
 	if err != nil {
@@ -114,6 +114,7 @@ func (fa fileAnalyzer) Visit(node ast.Node) ast.Visitor {
 	switch n := node.(type) {
 	case *ast.FuncDecl:
 		fa.rewriteFuncDecl(n)
+		return nil //skip visiting function body
 	}
 
 	return fa
@@ -128,6 +129,7 @@ func (fa fileAnalyzer) positionAsString(pos token.Pos) string {
 }
 
 // rewriteFuncDecl is in charge of generating contract-enforcing code for functions
+//@requires fd != nil
 func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
 	if fd.Doc == nil {
 		return // nothing to do, the function does not have a comment
@@ -158,9 +160,10 @@ func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
 
 // generateCode yields the list of GO statements that enforce the given contract
 // It also yields the list of errors that occurred while the generation
-// TODO @requires c != nil
-// TODO @ensures len(c.Ensures()) > 0 ==> len(c.Requires())+1 == len(stmts)+len(errs)
-// TODO @ensures len(c.Ensures()) == 0 ==> len(c.Requires()) == len(stmts)+len(errs)
+//@requires c != nil
+// All ensures are grouped in a single defer statement and there is an if statement for each require
+//@ensures len(c.Ensures()) > 0 ==> len(c.Requires())+1 == len(stmts)+len(errs)
+//@ensures len(c.Ensures()) == 0 ==> len(c.Requires()) == len(stmts)+len(errs)
 func (fa fileAnalyzer) generateCode(c *contract.FuncContract) (stmts []string, errs []error) {
 	result := []string{}
 	errs = []error{}
@@ -190,7 +193,7 @@ func (fa fileAnalyzer) generateCode(c *contract.FuncContract) (stmts []string, e
 const commentPrefix = "//dbc4go "
 
 //@ensures  r == "" ==> e != nil
-func (fa fileAnalyzer) generateRequiresCode(req contract.Requires) (r string, e error) {
+func (fileAnalyzer) generateRequiresCode(req contract.Requires) (r string, e error) {
 	const templateRequire = commentPrefix + `if !(%cond%) { panic("precondition %contract% not satisfied") }`
 	exp := req.ExpandedExpression()
 
@@ -202,6 +205,7 @@ func (fa fileAnalyzer) generateRequiresCode(req contract.Requires) (r string, e 
 
 //@requires fd != nil
 //@requires len(clauses) > 0
+//@ensures r != ""
 func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.FuncDecl) (r string) {
 	const templateEnsure = commentPrefix + `if !(%cond%) { panic("postcondition %contract% not satisfied") }`
 
@@ -226,7 +230,7 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.F
 		}
 	}
 
-	hasReceiver := fd.Recv != nil && len(fd.Recv.List) > 0 && fd.Recv.List[0].Names[0].String() != "_"
+	hasReceiver := fd.Recv != nil && len(fd.Recv.List) > 0 && len(fd.Recv.List[0].Names) > 0 && fd.Recv.List[0].Names[0].String() != "_"
 	if hasReceiver {
 		receiverID := fd.Recv.List[0].Names[0].String()
 		funcParams = append(funcParams, fmt.Sprintf("%s %s", oldPrefix+receiverID, fa.typeAsString(fd.Recv.List[0].Type)))
@@ -242,7 +246,9 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.F
 	return r
 }
 
-func (fa fileAnalyzer) typeAsString(n ast.Node) string {
+//@requires n != nil
+//@ensures r != ""
+func (fa fileAnalyzer) typeAsString(n ast.Node) (r string) {
 	switch n := n.(type) {
 	case *ast.StarExpr:
 		return "*" + fa.typeAsString(n.X)
