@@ -84,7 +84,6 @@ func analyzeCode(src io.Reader) (r bytes.Buffer, err error) {
 	buf.WriteString(code)
 
 	finalCode := strings.ReplaceAll(buf.String(), commentPrefix, "")
-	println(finalCode)
 	buf.Reset()
 	buf.WriteString(finalCode)
 
