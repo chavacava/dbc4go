@@ -63,16 +63,19 @@ func (p Parser) Parse(contract *contract.FuncContract, line string) error {
 }
 
 //@requires path != ""
-func (p Parser) parseImport(path string) (string, error) {
+//@ensures r == "" ==> err != nil
+func (p Parser) parseImport(path string) (r string, err error) {
 	return path, nil
 }
 
 //@requires expr != ""
-func (p Parser) parseRequires(expr string) (contract.Requires, error) {
+//@ensures r == contract.Requires{} ==> err != nil
+func (p Parser) parseRequires(expr string) (r contract.Requires, err error) {
 	return contract.NewRequires(expr), nil
 }
 
 //@requires expr != ""
-func (p Parser) parseEnsures(expr string) (contract.Ensures, error) {
+//@ensures r == contract.Ensures{} ==> err != nil
+func (p Parser) parseEnsures(expr string) (r contract.Ensures, err error) {
 	return contract.NewEnsures(expr), nil
 }
