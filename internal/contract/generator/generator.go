@@ -43,7 +43,7 @@ func GenerateCode(input io.Reader, output io.Writer) error {
 	return nil
 }
 
-//@ensures len(r) == 0 ==> err != nil
+//@ensures r.Len() == 0 ==> err != nil
 //TODO(chavacava) how to ensure that r is valid Go code?
 func analyzeCode(src io.Reader) (r bytes.Buffer, err error) {
 	fset := token.NewFileSet()

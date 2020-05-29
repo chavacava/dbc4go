@@ -34,7 +34,7 @@ func (c *FuncContract) Target() (t *ast.FuncDecl) {
 }
 
 // AddRequires adds a requires to this contract
-//@ensures len(c.requires) == len(@old(c.requires)) + 1
+// ensures len(c.requires) == len(@old(c.requires)) + 1
 //@ensures c.requires[len(c.requires)-1] == r
 func (c *FuncContract) AddRequires(r Requires) {
 	c.requires = append(c.requires, r)
@@ -47,7 +47,7 @@ func (c *FuncContract) Requires() (r []Requires) {
 }
 
 // AddEnsures adds a ensures to this contract
-//@ensures len(c.ensures) == len(@old(c.ensures)) + 1
+// ensures len(c.ensures) == len(@old(c.ensures)) + 1
 //@ensures c.ensures[len(c.ensures)-1] == e
 func (c *FuncContract) AddEnsures(e Ensures) {
 	c.ensures = append(c.ensures, e)
