@@ -19,10 +19,10 @@ func NewParser() Parser {
 	return Parser{}
 }
 
-var reContracts = regexp.MustCompile("//@(?P<kind>[a-z]+)[\t ]+(?P<expr>[^$]+)")
+var reContracts = regexp.MustCompile("\\s*//\\s*@(?P<kind>[a-z]+)[\t ]+(?P<expr>[^$]+)")
 
 // Parse enrich the Contract with the clause if present in the given comment line
-//@requires contract != nil
+// @requires contract != nil
 func (p Parser) Parse(contract *contract.FuncContract, line string) error {
 	r2 := reContracts.FindAllStringSubmatch(line, -1)
 
@@ -62,20 +62,20 @@ func (p Parser) Parse(contract *contract.FuncContract, line string) error {
 	return nil
 }
 
-//@requires path != ""
-//@ensures r == "" ==> err != nil
+// @requires path != ""
+// @ensures r == "" ==> err != nil
 func (p Parser) parseImport(path string) (r string, err error) {
 	return path, nil
 }
 
-//@requires expr != ""
-//@ensures r == contract.Requires{} ==> err != nil
+// @requires expr != ""
+// @ensures r == contract.Requires{} ==> err != nil
 func (p Parser) parseRequires(expr string) (r contract.Requires, err error) {
 	return contract.NewRequires(expr), nil
 }
 
-//@requires expr != ""
-//@ensures r == contract.Ensures{} ==> err != nil
+// @requires expr != ""
+// @ensures r == contract.Ensures{} ==> err != nil
 func (p Parser) parseEnsures(expr string) (r contract.Ensures, err error) {
 	return contract.NewEnsures(expr), nil
 }
