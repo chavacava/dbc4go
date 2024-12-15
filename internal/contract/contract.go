@@ -18,43 +18,43 @@ type FuncContract struct {
 }
 
 // NewFuncContract creates a FuncContract
-//@requires target != nil
-//@ensures c.target == target
-//@ensures len(c.requires) == 0
-//@ensures len(c.ensures) == 0
-//@ensures len(c.imports) == 0
-func NewFuncContract(target *ast.FuncDecl) (c FuncContract) {
-	return FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: target, imports: map[string]struct{}{}}
+// @requires target != nil
+// @ensures c.target == target
+// @ensures len(c.requires) == 0
+// @ensures len(c.ensures) == 0
+// @ensures len(c.imports) == 0
+func NewFuncContract(target *ast.FuncDecl) (c *FuncContract) {
+	return &FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: target, imports: map[string]struct{}{}}
 }
 
-//Target yields the function declaration to which this contract is attached to
-//@ensures t == c.target
+// Target yields the function declaration to which this contract is attached to
+// @ensures t == c.target
 func (c *FuncContract) Target() (t *ast.FuncDecl) {
 	return c.target
 }
 
 // AddRequires adds a requires to this contract
 // ensures len(c.requires) == len(@old(c.requires)) + 1
-//@ensures c.requires[len(c.requires)-1] == r
+// @ensures c.requires[len(c.requires)-1] == r
 func (c *FuncContract) AddRequires(r Requires) {
 	c.requires = append(c.requires, r)
 }
 
 // Requires yields requires clauses of this contract
-//@ensures len(r) == len(c.requires)
+// @ensures len(r) == len(c.requires)
 func (c *FuncContract) Requires() (r []Requires) {
 	return c.requires
 }
 
 // AddEnsures adds a ensures to this contract
 // ensures len(c.ensures) == len(@old(c.ensures)) + 1
-//@ensures c.ensures[len(c.ensures)-1] == e
+// @ensures c.ensures[len(c.ensures)-1] == e
 func (c *FuncContract) AddEnsures(e Ensures) {
 	c.ensures = append(c.ensures, e)
 }
 
 // Ensures yields ensures clauses of this contract
-//@ensures len(r) == len(c.ensures)
+// @ensures len(r) == len(c.ensures)
 func (c *FuncContract) Ensures() (r []Ensures) {
 	return c.ensures
 }
@@ -65,7 +65,7 @@ type Requires struct {
 }
 
 // NewRequires creates a Requires object
-//@requires expr != ""
+// @requires expr != ""
 func NewRequires(expr string) Requires {
 	return Requires{expr: expr}
 }
@@ -85,7 +85,7 @@ type Ensures struct {
 }
 
 // NewEnsures creates a Ensures object
-//@ensures expr != ""
+// @ensures expr != ""
 func NewEnsures(expr string) Ensures {
 	return Ensures{expr: expr}
 }
