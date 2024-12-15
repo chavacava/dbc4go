@@ -22,8 +22,6 @@ func NewParser() Parser {
 
 var reContracts = regexp.MustCompile(`\s*//\s*@(?P<kind>[a-z]+)(?:[\t ]+(?P<description>\[[\w\s\d,]+\]))?[\t ]+(?P<expr>[^$]+)`)
 
-const EMPTY_RULE_DESCRIPTION = ""
-
 func parseLine(line string) (kind, description, expr string, matched bool) {
 	r2 := reContracts.FindAllStringSubmatch(line, -1)
 	if r2 == nil {
@@ -32,7 +30,7 @@ func parseLine(line string) (kind, description, expr string, matched bool) {
 
 	kind = r2[0][1]
 	expr = r2[0][2]
-	description = EMPTY_RULE_DESCRIPTION
+	description = ""
 	if len(r2[0]) == 4 {
 		description = expr
 		expr = r2[0][3]
