@@ -1,3 +1,4 @@
+// Package main provides the dbc4go command line application
 package main
 
 import (
