@@ -12,11 +12,11 @@ func TestConstructor(t *testing.T) {
 	fd := &ast.FuncDecl{}
 	tests := []struct {
 		target *ast.FuncDecl
-		result FuncContract
+		result *FuncContract
 	}{
 		{
 			target: fd,
-			result: FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: fd, imports: map[string]struct{}{}},
+			result: &FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: fd, imports: map[string]struct{}{}},
 		},
 	}
 

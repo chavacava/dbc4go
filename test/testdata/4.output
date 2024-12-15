@@ -6,7 +6,7 @@ import (
 	"go/token"
 )
 
-//@ensures len(args) == len(r)
+// @ensures len(args) == len(r)
 func NewCallArgs(args ...ast.Expr) (r []ast.Expr) {
 	defer func(old_args ...ast.Expr) {
 		if !(len(args) == len(r)) {

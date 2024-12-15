@@ -87,7 +87,7 @@ func TestParse(t *testing.T) {
 	c := contract.NewFuncContract(&ast.FuncDecl{})
 	tests := []struct {
 		line     string
-		contract contract.FuncContract
+		contract *contract.FuncContract
 		err      bool
 	}{
 		{
@@ -96,12 +96,12 @@ func TestParse(t *testing.T) {
 			err:      false,
 		},
 		{
-			line:     "//@ensures a == b",
+			line:     " //@ensures a == b",
 			contract: c,
 			err:      false,
 		},
 		{
-			line:     "//@requires",
+			line:     "  //  @requires",
 			contract: c,
 			err:      false,
 		},
@@ -121,14 +121,14 @@ func TestParse(t *testing.T) {
 			err:      false,
 		},
 		{
-			line:     "//@unknown a",
+			line:     " //  @unknown a",
 			contract: c,
 			err:      true,
 		},
 	}
 	p := NewParser()
 	for _, tc := range tests {
-		err := p.Parse(&tc.contract, tc.line)
+		err := p.Parse(tc.contract, tc.line)
 		if tc.err {
 			assert.NotEqual(t, err, nil, "line %s", tc.line)
 		}
