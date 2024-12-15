@@ -61,13 +61,14 @@ func (c *FuncContract) Ensures() (r []Ensures) {
 
 // Requires is a @requires clause of a contract
 type Requires struct {
-	expr string
+	expr        string
+	description string
 }
 
 // NewRequires creates a Requires object
 // @requires expr != ""
-func NewRequires(expr string) Requires {
-	return Requires{expr: expr}
+func NewRequires(expr, description string) Requires {
+	return Requires{expr: expr, description: description}
 }
 
 // ExpandedExpression yields the expanded requires' expression
@@ -76,18 +77,22 @@ func (r Requires) ExpandedExpression() string {
 }
 
 func (r Requires) String() string {
-	return "@requires " + r.expr
+	if r.description != "" {
+		r.description += " "
+	}
+	return "@requires " + r.description + r.expr
 }
 
 // Ensures is a @ensures clause of a contract
 type Ensures struct {
-	expr string
+	expr        string
+	description string
 }
 
 // NewEnsures creates a Ensures object
 // @ensures expr != ""
-func NewEnsures(expr string) Ensures {
-	return Ensures{expr: expr}
+func NewEnsures(expr, description string) Ensures {
+	return Ensures{expr: expr, description: description}
 }
 
 var re4old = regexp.MustCompile(`@old\(([^\)]+)\)`)
@@ -101,7 +106,10 @@ func (r Ensures) ExpandedExpression() string {
 }
 
 func (r Ensures) String() string {
-	return "@ensures " + r.expr
+	if r.description != "" {
+		r.description += " "
+	}
+	return "@ensures " + r.description + r.expr
 }
 
 var reImplies = regexp.MustCompile(`(.*)==>(.*)`)

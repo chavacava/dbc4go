@@ -28,8 +28,8 @@ func TestConstructor(t *testing.T) {
 }
 
 func TestAddRequires(t *testing.T) {
-	sampleReq1 := NewRequires("1")
-	sampleReq2 := NewRequires("2")
+	sampleReq1 := NewRequires("1", "")
+	sampleReq2 := NewRequires("2", "")
 	tests := []struct {
 		requires         Requires
 		expectedRequires []Requires
@@ -66,8 +66,8 @@ func TestTarget(t *testing.T) {
 }
 
 func TestRequires(t *testing.T) {
-	sampleReq1 := NewRequires("1")
-	sampleReq2 := NewRequires("2")
+	sampleReq1 := NewRequires("1", "")
+	sampleReq2 := NewRequires("2", "")
 	tests := []struct {
 		requires []Requires
 	}{
@@ -92,8 +92,8 @@ func TestRequires(t *testing.T) {
 }
 
 func TestAddEnsures(t *testing.T) {
-	sampleEns1 := NewEnsures("1")
-	sampleEns2 := NewEnsures("2")
+	sampleEns1 := NewEnsures("1", "")
+	sampleEns2 := NewEnsures("2", "")
 	tests := []struct {
 		ensures         Ensures
 		expectedEnsures []Ensures
@@ -122,8 +122,8 @@ func TestAddEnsures(t *testing.T) {
 }
 
 func TestEnsures(t *testing.T) {
-	sampleEns1 := NewEnsures("1")
-	sampleEns2 := NewEnsures("2")
+	sampleEns1 := NewEnsures("1", "")
+	sampleEns2 := NewEnsures("2", "")
 	tests := []struct {
 		ensures []Ensures
 	}{

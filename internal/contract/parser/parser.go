@@ -4,6 +4,7 @@ package parser
 //go:generate dbc4go -i $GOFILE -o $GOFILE
 
 import (
+	"fmt"
 	"regexp"
 
 	"github.com/chavacava/dbc4go/internal/contract"
@@ -19,30 +20,47 @@ func NewParser() Parser {
 	return Parser{}
 }
 
-var reContracts = regexp.MustCompile("\\s*//\\s*@(?P<kind>[a-z]+)[\t ]+(?P<expr>[^$]+)")
+var reContracts = regexp.MustCompile(`\s*//\s*@(?P<kind>[a-z]+)(?:[\t ]+(?P<description>\[[\w\s\d,]+\]))?[\t ]+(?P<expr>[^$]+)`)
+
+const EMPTY_RULE_DESCRIPTION = ""
+
+func parseLine(line string) (kind, description, expr string, matched bool) {
+	r2 := reContracts.FindAllStringSubmatch(line, -1)
+	if r2 == nil {
+		return kind, description, expr, false
+	}
+
+	kind = r2[0][1]
+	expr = r2[0][2]
+	description = EMPTY_RULE_DESCRIPTION
+	if len(r2[0]) == 4 {
+		description = expr
+		expr = r2[0][3]
+	}
+
+	fmt.Printf(">>>> kind:%q\tdescription:%q\texpr:%q\n", kind, description, expr)
+
+	return kind, description, expr, true
+}
 
 // Parse enrich the Contract with the clause if present in the given comment line
 // @requires contract != nil
 func (p Parser) Parse(contract *contract.FuncContract, line string) error {
-	r2 := reContracts.FindAllStringSubmatch(line, -1)
-
-	if r2 == nil {
+	kind, description, expr, matched := parseLine(line)
+	if !matched {
 		return nil // nothing to do, there is no contract in this comment line
 	}
 
-	kind := r2[0][1]
-	expr := r2[0][2]
-
 	switch kind {
 	case "requires":
-		clause, err := p.parseRequires(expr)
+		clause, err := p.parseRequires(expr, description)
 		if err != nil {
 			return errors.Wrap(err, "invalid @requires clause")
 		}
 
 		contract.AddRequires(clause)
 	case "ensures":
-		clause, err := p.parseEnsures(expr)
+		clause, err := p.parseEnsures(expr, description)
 		if err != nil {
 			return errors.Wrap(err, "invalid @ensures clause")
 		}
@@ -70,12 +88,12 @@ func (p Parser) parseImport(path string) (r string, err error) {
 
 // @requires expr != ""
 // @ensures r == contract.Requires{} ==> err != nil
-func (p Parser) parseRequires(expr string) (r contract.Requires, err error) {
-	return contract.NewRequires(expr), nil
+func (Parser) parseRequires(expr, description string) (r contract.Requires, err error) {
+	return contract.NewRequires(expr, description), nil
 }
 
 // @requires expr != ""
 // @ensures r == contract.Ensures{} ==> err != nil
-func (p Parser) parseEnsures(expr string) (r contract.Ensures, err error) {
-	return contract.NewEnsures(expr), nil
+func (Parser) parseEnsures(expr, description string) (r contract.Ensures, err error) {
+	return contract.NewEnsures(expr, description), nil
 }

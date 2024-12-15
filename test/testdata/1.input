@@ -14,7 +14,7 @@ type FuncContract struct {
 }
 
 // NewFuncContract creates a FuncContract
-// @requires target != nil
+// @requires [not nil target] target != nil
 // @ensures c.target == target
 // @ensures len(c.requires) == 0
 // @ensures len(c.ensures) == 0

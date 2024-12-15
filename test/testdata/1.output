@@ -15,13 +15,13 @@ type FuncContract struct {
 }
 
 // NewFuncContract creates a FuncContract
-// @requires target != nil
+// @requires [not nil target] target != nil
 // @ensures c.target == target
 // @ensures len(c.requires) == 0
 // @ensures len(c.ensures) == 0
 func NewFuncContract(target *ast.FuncDecl) (c FuncContract) {
 	if !(target != nil) {
-		panic("precondition @requires target != nil not satisfied")
+		panic("precondition @requires [not nil target] target != nil not satisfied")
 	}
 	defer func(old_target *ast.FuncDecl) {
 

@@ -45,14 +45,14 @@ func TestParseRequires(t *testing.T) {
 	}{
 		{
 			expr:     "a == b",
-			expected: contract.NewRequires("a == b"),
+			expected: contract.NewRequires("a == b", ""),
 			err:      false,
 		},
 	}
 
 	p := NewParser()
 	for _, tc := range tests {
-		r, err := p.parseRequires(tc.expr)
+		r, err := p.parseRequires(tc.expr, "")
 		assert.Equal(t, r, tc.expected)
 		if tc.err {
 			assert.NotEqual(t, err, nil)
@@ -68,14 +68,14 @@ func TestParseEnsures(t *testing.T) {
 	}{
 		{
 			expr:     "a == b",
-			expected: contract.NewEnsures("a == b"),
+			expected: contract.NewEnsures("a == b", ""),
 			err:      false,
 		},
 	}
 
 	p := NewParser()
 	for _, tc := range tests {
-		r, err := p.parseEnsures(tc.expr)
+		r, err := p.parseEnsures(tc.expr, "")
 		assert.Equal(t, r, tc.expected)
 		if tc.err {
 			assert.NotEqual(t, err, nil)
