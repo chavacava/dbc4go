@@ -32,6 +32,10 @@ func TestDBC4GO(t *testing.T) {
 			input:     "./testdata/4.input",
 			expOutput: "./testdata/4.output",
 		},
+		{
+			input:     "./testdata/unmodified.input",
+			expOutput: "./testdata/unmodified.output",
+		},
 	}
 
 	tmpDir, err := os.MkdirTemp("", "testing-dbc4go")

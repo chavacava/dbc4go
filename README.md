@@ -52,10 +52,10 @@ Example:
 const maxAuthorizedSpeed = 350
 
 // NewCar returns a Car struct
-//@requires wheels > 2
-//@requires wheelsDrive <= wheels && wheelsDrive >= 2 && wheelsDrive%2 == 0
-//@requires maxSpeedKmh > 0 && maxSpeedKmh <= maxAuthorizedSpeed
-//@requires manufacturer != ""
+// @requires wheels > 2
+// @requires wheelsDrive <= wheels && wheelsDrive >= 2 && wheelsDrive%2 == 0
+// @requires maxSpeedKmh > 0 && maxSpeedKmh <= maxAuthorizedSpeed
+// @requires manufacturer != ""
 func NewCar(wheels int, wheelsDrive int, maxSpeedKmh int, manufacturer string) Car { ... }
 ```
 
@@ -63,10 +63,10 @@ func NewCar(wheels int, wheelsDrive int, maxSpeedKmh int, manufacturer string) C
 
 ```go
 // NewCar returns a Car struct
-//@requires wheels > 2
-//@requires wheelsDrive <= wheels && wheelsDrive >= 2 && wheelsDrive%2 == 0
-//@requires maxSpeedKmh > 0 && maxSpeedKmh <= maxAuthorizedSpeed
-//@requires manufacturer != ""
+// @requires wheels > 2
+// @requires wheelsDrive <= wheels && wheelsDrive >= 2 && wheelsDrive%2 == 0
+// @requires maxSpeedKmh > 0 && maxSpeedKmh <= maxAuthorizedSpeed
+// @requires manufacturer != ""
 func NewCar(wheels int, wheelsDrive int, maxSpeedKmh int, manufacturer string) Car {
         if !(manufacturer != "") {
                 panic("precondition manufacturer != \"\" not satisfied")
@@ -101,9 +101,9 @@ Example:
 
 ```go
 // accelerate the car
-//@requires delta > 0
-//@requires c.speed + delta <= c.maxSpeedKmh
-//@ensures c.speed == @old(c.speed)+delta
+// @requires delta > 0
+// @requires c.speed + delta <= c.maxSpeedKmh
+// @ensures c.speed == @old(c.speed)+delta
 func (c *Car) accelerate(delta int) { ... }
 ```
 
@@ -114,11 +114,31 @@ The `==>` operator (implication) allows to write more precise and concise contra
 
 ```go
 // accelerate the car
-//@requires delta > 0
-//@ensures @old(c.speed) + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
-//@ensures @old(c.speed) + delta < c.maxSpeedKmh ==> c.speed == @old(c.speed) + delta
+// @requires delta > 0
+// @ensures @old(c.speed) + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
+// @ensures @old(c.speed) + delta < c.maxSpeedKmh ==> c.speed == @old(c.speed) + delta
 func (c *Car) accelerate(delta int) { ... }
 ```
+
+### `@unmodified`
+
+Enforces that the function keeps unmodified the given list of identifiers.
+
+Syntax:
+
+`@unmodified` _identifiers list_
+
+Example:
+
+```go
+// accelerate the car
+// @requires delta > 0
+// @ensures @old(c.speed) + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
+// @ensures @old(c.speed) + delta < c.maxSpeedKmh ==> c.speed == @old(c.speed) + delta
+// @unmodified c.wheels, c.wheelsDrive, c.maxSpeedKmh, c.manufacturer
+func (c *Car) accelerate(delta int) { ... }
+```
+`@unmodified` is just syntax sugar for simplify writing `@ensures id == @old(id)`
 
 ### `@import`
 
@@ -132,8 +152,8 @@ Example:
 
 ```go
 // Add element e to container
-//@import strings
-//@requires strings.HasPrefix(e, "my")
+// @import strings
+// @requires strings.HasPrefix(e, "my")
 func (c *Container) Add(e string) { ... }
 ```
 
@@ -153,8 +173,8 @@ Examples:
 
 ```go
 // Car data-model
-//@invariant speed <= maxSpeedKmh
 type Car struct {
+        // @invariant speed <= maxSpeedKmh
         maxSpeedKmh int
         speed       int
         // other fields ...
@@ -163,8 +183,8 @@ type Car struct {
 
 ```go
 // BankAccount data-model
-//@invariant balance >= 0
 type BankAccount struct {
+        // @invariant balance >= 0
         balance float
         Owner   string
         // other fields ...
