@@ -25,7 +25,7 @@ var reContracts = regexp.MustCompile(`\s*//\s*@(?P<kind>[a-z]+)(?:[\t ]+(?P<desc
 
 // Parse enrich the Contract with the clause if present in the given comment line
 // @requires contract != nil
-func (p Parser) Parse(contract *contract.FuncContract, line string) error {
+func (p Parser) Parse(funcContract *contract.FuncContract, line string) error {
 	kind, description, expr, matched := parseLine(line)
 	if !matched {
 		return nil // nothing to do, there is no contract in this comment line
@@ -33,34 +33,38 @@ func (p Parser) Parse(contract *contract.FuncContract, line string) error {
 
 	switch kind {
 	case "requires":
-		clause, err := p.parseRequires(expr, description)
-		if err != nil {
-			return errors.Wrap(err, "invalid @requires clause")
+		if contract.Re4old.MatchString(expr) {
+			return fmt.Errorf("@old can not be used in @requires expressions: %s", expr)
 		}
 
-		contract.AddRequires(clause)
+		clause, err := p.parseRequires(expr, description)
+		if err != nil {
+			return fmt.Errorf("invalid @requires clause: %w", err)
+		}
+
+		funcContract.AddRequires(clause)
 	case "ensures":
 		clause, err := p.parseEnsures(expr, description)
 		if err != nil {
-			return errors.Wrap(err, "invalid @ensures clause")
+			return fmt.Errorf("invalid @ensures clause: %w", err)
 		}
 
-		contract.AddEnsures(clause)
+		funcContract.AddEnsures(clause)
 	case "import":
 		clause, err := p.parseImport(expr)
 		if err != nil {
-			return errors.Wrap(err, "invalid @import clause")
+			return fmt.Errorf("invalid @import clause: %w", err)
 		}
 
-		contract.AddImport(clause)
+		funcContract.AddImport(clause)
 	case "unmodified":
 		clauses, err := p.parseUnmodified(expr)
 		if err != nil {
-			return errors.Wrap(err, "invalid @import clause")
+			return fmt.Errorf("invalid @import clause: %w", err)
 		}
 
 		for _, clause := range clauses {
-			contract.AddEnsures(clause)
+			funcContract.AddEnsures(clause)
 		}
 	default:
 		return errors.Errorf("unknown contract kind %s", kind)

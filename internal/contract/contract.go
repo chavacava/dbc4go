@@ -95,7 +95,7 @@ func NewEnsures(expr, description string) Ensures {
 	return Ensures{expr: expr, description: description}
 }
 
-var re4old = regexp.MustCompile(`@old\(([^\)]+)\)`)
+var Re4old = regexp.MustCompile(`@old\(([^\)]+)\)`)
 
 // ExpandedExpression yields the expanded ensures' expression
 func (r Ensures) ExpandedExpression() (string, map[string]string) {
@@ -103,7 +103,7 @@ func (r Ensures) ExpandedExpression() (string, map[string]string) {
 
 	idToOldID := map[string]string{}
 	// replace @old(id.otherId) by old_id_otherId
-	matches := re4old.FindAllStringSubmatch(expr, -1)
+	matches := Re4old.FindAllStringSubmatch(expr, -1)
 	for _, m := range matches {
 		oldAsID := oldID(m[1])
 		expr = strings.Replace(expr, m[0], oldAsID, 1)
