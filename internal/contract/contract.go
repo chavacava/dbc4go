@@ -98,11 +98,24 @@ func NewEnsures(expr, description string) Ensures {
 var re4old = regexp.MustCompile(`@old\(([^\)]+)\)`)
 
 // ExpandedExpression yields the expanded ensures' expression
-func (r Ensures) ExpandedExpression() string {
+func (r Ensures) ExpandedExpression() (string, map[string]string) {
 	expr := rewriteImpliesExpr(r.expr)
 
-	// replace @old(id.otherId) by old_id.otherId
-	return re4old.ReplaceAllString(expr, `old_$1`)
+	idToOldID := map[string]string{}
+	// replace @old(id.otherId) by old_id_otherId
+	matches := re4old.FindAllStringSubmatch(expr, -1)
+	for _, m := range matches {
+		oldAsID := oldID(m[1])
+		expr = strings.Replace(expr, m[0], oldAsID, 1)
+		idToOldID[m[1]] = oldAsID
+	}
+
+	return expr, idToOldID
+}
+
+func oldID(id string) string {
+	id = strings.ReplaceAll(id, `.`, "_")
+	return "old_" + id
 }
 
 func (r Ensures) String() string {

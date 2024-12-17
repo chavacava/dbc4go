@@ -1,12 +1,12 @@
 package foo
 
-var a int
+var x int
 
 type s struct {
     a string
 }
 
-// @unmodified a, s.a 
+// @unmodified x, s.a 
 func unmodified(a int, b int) (r int) {
     return a
 } 

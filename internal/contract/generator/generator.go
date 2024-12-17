@@ -202,31 +202,17 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.F
 	const templateEnsure = commentPrefix + `if !(%cond%) { panic("postcondition %contract% not satisfied") }`
 
 	ensuresCode := make([]string, len(clauses))
+	funcParams := []string{}
+	funcArgs := []string{}
 	for _, clause := range clauses {
-		exp := clause.ExpandedExpression()
+		exp, idToOld := clause.ExpandedExpression()
+		for id, old := range idToOld {
+			funcParams = append(funcParams, fmt.Sprintf("%s %s", old, fa.getTypeForID(id, fd)))
+			funcArgs = append(funcArgs, id)
+		}
 		ensure := strings.Replace(templateEnsure, "%cond%", exp, 1)
 		ensure = strings.Replace(ensure, "%contract%", escapeDoubleQuotes(clause.String()), 1)
 		ensuresCode = append(ensuresCode, ensure)
-	}
-
-	funcParams := []string{}
-	funcArgs := []string{}
-
-	const oldPrefix = "old_"
-	if fd.Type.Params != nil {
-		for _, param := range fd.Type.Params.List {
-			paramID := param.Names[0].String()
-
-			funcParams = append(funcParams, fmt.Sprintf("%s %s", oldPrefix+paramID, fa.typeAsString(param.Type)))
-			funcArgs = append(funcArgs, paramID)
-		}
-	}
-
-	hasReceiver := fd.Recv != nil && len(fd.Recv.List) > 0 && len(fd.Recv.List[0].Names) > 0 && fd.Recv.List[0].Names[0].String() != "_"
-	if hasReceiver {
-		receiverID := fd.Recv.List[0].Names[0].String()
-		funcParams = append(funcParams, fmt.Sprintf("%s %s", oldPrefix+receiverID, fa.typeAsString(fd.Recv.List[0].Type)))
-		funcArgs = append(funcArgs, receiverID)
 	}
 
 	const templateDeferredFunction = commentPrefix + `defer func(%params%){%checks%}(%args%)`
@@ -236,6 +222,26 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.F
 	r = strings.Replace(r, "%args%", strings.Join(funcArgs, ","), 1)
 
 	return r
+}
+
+func (fa fileAnalyzer) getTypeForID(id string, fd *ast.FuncDecl) string {
+	for _, param := range fd.Type.Params.List {
+		fields := param.Names
+		found := false
+		for _, field := range fields {
+			name := field.Name
+			if id == name {
+				found = true
+				break
+			}
+		}
+
+		if found {
+			return fa.typeAsString(param.Type)
+		}
+	}
+
+	return "any"
 }
 
 // @requires n != nil

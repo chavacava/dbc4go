@@ -7,11 +7,11 @@ func bar(a int, b int) (r int) {
 	if !(!(a > 0) || (b > 0)) {
 		panic("precondition @requires a > 0 ==> b > 0 not satisfied")
 	}
-	defer func(old_a int, old_b int) {
+	defer func() {
 		if !(!(a == 0) || (r == 0)) {
 			panic("postcondition @ensures a==0 ==> r==0 not satisfied")
 		}
-	}(a, b)
+	}()
 	return a
 }
 
