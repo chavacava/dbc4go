@@ -54,7 +54,11 @@ func analyzeCode(src io.Reader) (r bytes.Buffer, err error) {
 		return bytes.Buffer{}, fmt.Errorf("unable to decorate AST: %v", err)
 	}
 
-	fileAnalyzer := fileAnalyzer{decorator: astDecorator, imports: importsContainer{}}
+	fileAnalyzer := fileAnalyzer{
+		decorator:          astDecorator,
+		imports:            importsContainer{},
+		typeInvariantsCode: map[string][]string{},
+	}
 	// walk the AST with the analyzer to find contracts and generate their contracts
 	ast.Walk(fileAnalyzer, astFile)
 
@@ -101,8 +105,9 @@ func analyzeCode(src io.Reader) (r bytes.Buffer, err error) {
 type importsContainer map[string]struct{}
 
 type fileAnalyzer struct {
-	decorator *decorator.Decorator
-	imports   importsContainer
+	decorator          *decorator.Decorator
+	imports            importsContainer
+	typeInvariantsCode map[string][]string
 }
 
 func (fa fileAnalyzer) Visit(node ast.Node) ast.Visitor {
@@ -110,9 +115,45 @@ func (fa fileAnalyzer) Visit(node ast.Node) ast.Visitor {
 	case *ast.FuncDecl:
 		fa.rewriteFuncDecl(n)
 		return nil //skip visiting function body
+	case *ast.GenDecl:
+		if n.Tok != token.TYPE {
+			return nil // not a type declaration
+		}
+		if len(n.Specs) <= 0 {
+			return nil // no specs in the type declaration
+		}
+		typeSpec, ok := (n.Specs[0]).(*ast.TypeSpec)
+		if !ok {
+			return nil // not a type declaration
+		}
+
+		fa.analyzeTypeContract(typeSpec.Name.Name, n.Doc)
+		return nil // skip visiting the type fields
 	}
 
 	return fa
+}
+
+func (fa fileAnalyzer) analyzeTypeContract(typeName string, doc *ast.CommentGroup) {
+	if doc == nil {
+		return // nothing to do, the type does not have associated documentation
+	}
+
+	contractParser := contractParser.NewParser()
+	contract := contract.NewTypeContract(typeName)
+	for _, commentLine := range doc.List {
+		err := contractParser.ParseTypeContract(contract, commentLine.Text)
+		if err != nil {
+			log.Printf("%s: Warning: %s", fa.positionAsString(commentLine.Pos()), err.Error())
+			continue
+		}
+	}
+
+	fa.addCodeForTypeInvariant(typeName, contract)
+}
+
+func (fa fileAnalyzer) addCodeForTypeInvariant(typeName string, contract *contract.TypeContract) {
+	fa.typeInvariantsCode[typeName] = fa.generateInvariantCode(contract)
 }
 
 // positionAsString returns a string representation of the given token position
@@ -126,28 +167,60 @@ func (fa fileAnalyzer) positionAsString(pos token.Pos) string {
 // rewriteFuncDecl is in charge of generating contract-enforcing code for functions
 // @requires fd != nil
 func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
-	if fd.Doc == nil {
-		return // nothing to do, the function does not have a comment
-	}
-
-	contractParser := contractParser.NewParser()
-	contract := contract.NewFuncContract(fd)
-	comments := fd.Doc.List
-	for _, commentLine := range comments {
-		err := contractParser.Parse(contract, commentLine.Text)
-		if err != nil {
-			log.Printf("%s: Warning: %s", fa.positionAsString(commentLine.Pos()), err.Error())
-			continue
-		}
-	}
-
-	contractStmts, errs := fa.generateCode(contract)
-	for _, err := range errs {
-		log.Printf("Warning: %v", err)
-	}
-
 	dstFuncDecl := fa.decorator.Dst.Nodes[fd].(*dst.FuncDecl)
-	dstFuncDecl.Body.Decorations().Start.Append(contractStmts...)
+	if fd.Doc != nil {
+		contractParser := contractParser.NewParser()
+		contract := contract.NewFuncContract(fd)
+		comments := fd.Doc.List
+		for _, commentLine := range comments {
+			err := contractParser.ParseFuncContract(contract, commentLine.Text)
+			if err != nil {
+				log.Printf("%s: Warning: %s", fa.positionAsString(commentLine.Pos()), err.Error())
+				continue
+			}
+		}
+
+		contractStmts, errs := fa.generateCode(contract)
+		for _, err := range errs {
+			log.Printf("Warning: %v", err)
+		}
+
+		dstFuncDecl.Body.Decorations().Start.Append(contractStmts...)
+	}
+
+	// Also add code for enforce invariants if available
+	if fd.Recv == nil || len(fd.Recv.List) < 1 {
+		return // not a method thus no invariants
+	}
+
+	receiverType := fa.getReceiverTypeName(fd.Recv)
+	invariantCode, ok := fa.typeInvariantsCode[receiverType]
+	if !ok {
+		return // did not found invariant code associated to this method's receiver
+	}
+
+	if len(fd.Recv.List[0].Names) < 1 || fd.Recv.List[0].Names[0].Name == "_" {
+		// anonymous receiver
+		log.Printf("Warning: can not enforce invariants on method %s because it has an anonymous receiver", fd.Name.Name)
+		return
+		// TODO: insert a receiver name to enable checks
+	}
+
+	receiverName := fd.Recv.List[0].Names[0].Name
+	invariantCodeForMethod := make([]string, len(invariantCode))
+	for i, code := range invariantCode {
+		invariantCodeForMethod[i] = strings.ReplaceAll(code, receiverType+".", receiverName+".")
+	}
+	dstFuncDecl.Body.Decorations().Start.Append(invariantCodeForMethod...)
+}
+
+func (fa fileAnalyzer) getReceiverTypeName(receiver *ast.FieldList) string {
+	if len(receiver.List) < 1 {
+		return "UNKNOWN"
+	}
+
+	recType := receiver.List[0].Type
+	return strings.Replace(fa.typeAsString(recType), "*", "", 1)
 }
 
 // generateCode yields the list of GO statements that enforce the given contract
@@ -183,6 +256,30 @@ func (fa fileAnalyzer) generateCode(c *contract.FuncContract) (stmts []string, e
 }
 
 const commentPrefix = "//dbc4go "
+
+func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []string) {
+	result := []string{}
+
+	const templateEnsure = commentPrefix + `if !(%cond%) { panic("type invariant %contract% not satisfied") }`
+	clauses := c.Ensures()
+	ensuresCode := make([]string, len(clauses))
+	for _, clause := range clauses {
+		exp, _ := clause.ExpandedExpression()
+		ensure := strings.Replace(templateEnsure, "%cond%", exp, 1)
+		ensure = strings.Replace(ensure, "%contract%", escapeDoubleQuotes(clause.String()), 1)
+		ensuresCode = append(ensuresCode, ensure)
+	}
+	const templateDeferredFunction = commentPrefix + `defer func(){%checks%}()`
+	r := strings.Replace(templateDeferredFunction, "%checks%", strings.Join(ensuresCode, "\n"), 1)
+	result = append(result, r)
+
+	// merge new imports into imports list
+	for k, v := range c.Imports() {
+		fa.imports[k] = v
+	}
+
+	return result
+}
 
 // @ensures  r == "" ==> e != nil
 func (fileAnalyzer) generateRequiresCode(req contract.Requires) (r string, e error) {

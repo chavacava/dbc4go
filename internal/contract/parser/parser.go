@@ -23,9 +23,45 @@ func NewParser() Parser {
 
 var reContracts = regexp.MustCompile(`\s*//\s*@(?P<kind>[a-z]+)(?:[\t ]+(?P<description>\[[\w\s\d,]+\]))?[\t ]+(?P<expr>[^$]+)`)
 
-// Parse enrich the Contract with the clause if present in the given comment line
+// ParseTypeContract enrich the contract with the clause if present in the given comment line
+// @requires typeContract != nil
+func (p Parser) ParseTypeContract(typeContract *contract.TypeContract, line string) error {
+	kind, description, expr, matched := parseLine(line)
+	if !matched {
+		return nil // nothing to do, there is no contract in this comment line
+	}
+
+	switch kind {
+	case "invariant":
+		if contract.Re4old.MatchString(expr) {
+			return fmt.Errorf("@old can not be used in @invariant expressions: %s", expr)
+		}
+
+		clause, err := p.parseEnsures(expr, description) // invariants are ensures that apply to all methods of the type
+		if err != nil {
+			return fmt.Errorf("invalid @invariant clause: %w", err)
+		}
+
+		typeContract.AddEnsures(clause)
+	case "import":
+		clause, err := p.parseImport(expr)
+		if err != nil {
+			return fmt.Errorf("invalid @import clause: %w", err)
+		}
+
+		typeContract.AddImport(clause)
+	case "ensures", "requires", "unmodified":
+		return fmt.Errorf("@%s can not be used in type contracts: %s", kind, expr)
+	default:
+		return errors.Errorf("unknown contract kind %s", kind)
+	}
+
+	return nil
+}
+
+// ParseFuncContract enrich the Contract with the clause if present in the given comment line
 // @requires funcContract != nil
-func (p Parser) Parse(funcContract *contract.FuncContract, line string) error {
+func (p Parser) ParseFuncContract(funcContract *contract.FuncContract, line string) error {
 	kind, description, expr, matched := parseLine(line)
 	if !matched {
 		return nil // nothing to do, there is no contract in this comment line

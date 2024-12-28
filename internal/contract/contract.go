@@ -9,6 +9,50 @@ import (
 	"strings"
 )
 
+// TypeContract represents a contract associated to a type.
+// Typically a @invariant contract
+type TypeContract struct {
+	ensures        []Ensures
+	imports        map[string]struct{}
+	targetTypeName string
+}
+
+// NewTypeContract creates a TypeContract
+// @requires target != ""
+// @ensures c.targetTypeName == target
+// @ensures len(c.ensures) == 0
+// @ensures len(c.imports) == 0
+func NewTypeContract(target string) (c *TypeContract) {
+	return &TypeContract{
+		ensures:        []Ensures{},
+		targetTypeName: target,
+		imports:        map[string]struct{}{},
+	}
+}
+
+// AddEnsures adds a ensures to this contract
+// ensures len(c.ensures) == len(@old(c.ensures)) + 1
+// @ensures c.ensures[len(c.ensures)-1] == e
+func (c *TypeContract) AddEnsures(e Ensures) {
+	c.ensures = append(c.ensures, e)
+}
+
+// Ensures yields ensures clauses of this contract
+// @ensures len(r) == len(c.ensures)
+func (c *TypeContract) Ensures() (r []Ensures) {
+	return c.ensures
+}
+
+// AddImport adds an import to this contract
+func (c *TypeContract) AddImport(path string) {
+	c.imports[strings.Trim(path, "\"")] = struct{}{}
+}
+
+// Imports returns imports required by this contract
+func (c *TypeContract) Imports() map[string]struct{} {
+	return c.imports
+}
+
 // FuncContract represents a contract associated to a function
 type FuncContract struct {
 	requires []Requires
@@ -57,6 +101,16 @@ func (c *FuncContract) AddEnsures(e Ensures) {
 // @ensures len(r) == len(c.ensures)
 func (c *FuncContract) Ensures() (r []Ensures) {
 	return c.ensures
+}
+
+// AddImport adds an import to this contract
+func (c *FuncContract) AddImport(path string) {
+	c.imports[strings.Trim(path, "\"")] = struct{}{}
+}
+
+// Imports returns imports required by this contract
+func (c *FuncContract) Imports() map[string]struct{} {
+	return c.imports
 }
 
 // Requires is a @requires clause of a contract
@@ -138,14 +192,4 @@ func rewriteImpliesExpr(expr string) string {
 	q := strings.Trim(impExp[0][2], " ")
 
 	return "!(" + p + ") || (" + q + ")"
-}
-
-// AddImport adds an import to this contract
-func (c *FuncContract) AddImport(path string) {
-	c.imports[strings.Trim(path, "\"")] = struct{}{}
-}
-
-// Imports returns imports required by this contract
-func (c *FuncContract) Imports() map[string]struct{} {
-	return c.imports
 }

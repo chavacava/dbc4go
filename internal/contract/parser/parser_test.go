@@ -128,7 +128,7 @@ func TestParse(t *testing.T) {
 	}
 	p := NewParser()
 	for _, tc := range tests {
-		err := p.Parse(tc.contract, tc.line)
+		err := p.ParseFuncContract(tc.contract, tc.line)
 		if tc.err {
 			assert.NotEqual(t, err, nil, "line %s", tc.line)
 		}
