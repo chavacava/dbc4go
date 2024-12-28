@@ -6,6 +6,9 @@ const (
 )
 
 // BankAccount represents a bank account
+// @invariant [balance of open accounts is always at least the minBalance] (!BankAccount.closed) ==> BankAccount.balance >= minBalance
+// @invariant [balance of open accounts is always at most the maxBalance] (!BankAccount.closed) ==> BankAccount.balance <= maxBalance
+// @invariant [balance of closed accounts is 0] BankAccount.closed ==> BankAccount.balance == 0
 type BankAccount struct {
 	balance int  // the balance of the account
 	closed  bool // is the account closed?
@@ -20,11 +23,11 @@ func NewBankAccount(initialBalance int) (account BankAccount) {
 }
 
 // Credit the given amount to the account
-// @requires !a.closed
+// @requires [can not credit a closed account] !a.closed
 // @requires amount > 0 && (a.balance + amount) <= maxBalance
 // @ensures a.balance == @old(a.balance) + amount
 // Ensure other fields are unchanged:
-// @ensures !a.closed
+// @unmodified a.closed
 func (a *BankAccount) Credit(amount int) {
 	// ... implementation ...
 }
@@ -34,7 +37,7 @@ func (a *BankAccount) Credit(amount int) {
 // @requires amount > 0 && (a.balance - amount) >= minBalance
 // @ensures a.balance == @old(a.balance) - amount
 // Ensure other fields are unchanged:
-// @ensures !a.closed
+// @unmodified a.closed
 func (a *BankAccount) Debit(amount int) {
 	// ... implementation ...
 }
@@ -50,9 +53,9 @@ func (a *BankAccount) Close() (payout int) {
 
 // Balance yields the balance of the account
 // @ensures balance == a.balance
-// Ensure other fields are unchanged:
-// @ensures a.balance == @old(a.balance)
-// @ensures a.closed == @old(a.closed)
+// Ensure fields are unchanged:
+// @unmodified a.balance
+// @unmodified a.closed
 func (a *BankAccount) Balance() (balance int) {
 	// ... implementation ...
 }
