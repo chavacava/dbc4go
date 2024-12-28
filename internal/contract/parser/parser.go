@@ -24,7 +24,7 @@ func NewParser() Parser {
 var reContracts = regexp.MustCompile(`\s*//\s*@(?P<kind>[a-z]+)(?:[\t ]+(?P<description>\[[\w\s\d,]+\]))?[\t ]+(?P<expr>[^$]+)`)
 
 // Parse enrich the Contract with the clause if present in the given comment line
-// @requires contract != nil
+// @requires funcContract != nil
 func (p Parser) Parse(funcContract *contract.FuncContract, line string) error {
 	kind, description, expr, matched := parseLine(line)
 	if !matched {
