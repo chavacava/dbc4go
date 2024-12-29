@@ -90,7 +90,7 @@ func analyzeCode(src io.Reader) (r bytes.Buffer, err error) {
 	// re-parse file to check for errors in generated code
 	resultFile, err := parser.ParseFile(fset, "", &buf, parser.ParseComments)
 	if err != nil {
-		return bytes.Buffer{}, fmt.Errorf("found error in generated code, please check contracts: %w", err)
+		return bytes.Buffer{}, fmt.Errorf("found error in generated code, please check contracts: %w on\n%s", err, addLineNumbers(finalCode))
 	}
 
 	// format generated code
@@ -100,6 +100,15 @@ func analyzeCode(src io.Reader) (r bytes.Buffer, err error) {
 	}
 
 	return buf, nil
+}
+
+func addLineNumbers(text string) string {
+	result := ""
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		result += fmt.Sprintf("%d\t%s\n", i+1, line)
+	}
+	return result
 }
 
 type importsContainer map[string]struct{}
@@ -195,10 +204,9 @@ func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
 
 	receiverType := fa.getReceiverTypeName(fd.Recv)
 	invariantCode, ok := fa.typeInvariantsCode[receiverType]
-	if !ok {
+	if !ok || invariantCode == nil {
 		return // did not found invariant code associated to this method's receiver
 	}
-
 	if len(fd.Recv.List[0].Names) < 1 || fd.Recv.List[0].Names[0].Name == "_" {
 		// anonymous receiver
 		log.Printf("Warning: can not enforce invariants on method %s because it has an anonymous receiver", fd.Name.Name)
@@ -258,14 +266,20 @@ func (fa fileAnalyzer) generateCode(c *contract.FuncContract) (stmts []string, e
 const commentPrefix = "//dbc4go "
 
 func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []string) {
+	if len(c.Ensures()) == 0 {
+		return nil
+	}
 	result := []string{}
-
-	const templateEnsure = commentPrefix + `if !(%cond%) { panic("type invariant %contract% not satisfied") }`
+	const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("type invariant %contract% not satisfied") }`
 	clauses := c.Ensures()
 	ensuresCode := make([]string, len(clauses))
 	for _, clause := range clauses {
-		exp, _ := clause.ExpandedExpression()
-		ensure := strings.Replace(templateEnsure, "%cond%", exp, 1)
+		shortStmt, expr, _ := clause.ExpandedExpression()
+		if shortStmt != "" {
+			shortStmt = shortStmt + "; "
+		}
+		ensure := strings.Replace(templateEnsure, "%shortStmt%", shortStmt, 1)
+		ensure = strings.Replace(ensure, "%cond%", expr, 1)
 		ensure = strings.Replace(ensure, "%contract%", escapeDoubleQuotes(clause.String()), 1)
 		ensuresCode = append(ensuresCode, ensure)
 	}
@@ -283,7 +297,7 @@ func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []
 
 // @ensures  r == "" ==> e != nil
 func (fileAnalyzer) generateRequiresCode(req contract.Requires) (r string, e error) {
-	const templateRequire = commentPrefix + `if !(%cond%) { panic("precondition %contract% not satisfied") }`
+	const templateRequire = commentPrefix + `if !(%cond%) { panic("%contract% not satisfied") }`
 	exp := req.ExpandedExpression()
 
 	r = strings.Replace(templateRequire, "%cond%", exp, 1)
@@ -296,18 +310,22 @@ func (fileAnalyzer) generateRequiresCode(req contract.Requires) (r string, e err
 // @requires len(clauses) > 0
 // @ensures r != ""
 func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.FuncDecl) (r string) {
-	const templateEnsure = commentPrefix + `if !(%cond%) { panic("postcondition %contract% not satisfied") }`
+	const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("%contract% not satisfied") }`
 
 	ensuresCode := make([]string, len(clauses))
 	funcParams := []string{}
 	funcArgs := []string{}
 	for _, clause := range clauses {
-		exp, idToOld := clause.ExpandedExpression()
+		shortStmt, expr, idToOld := clause.ExpandedExpression()
+		if shortStmt != "" {
+			shortStmt = shortStmt + "; "
+		}
 		for id, old := range idToOld {
 			funcParams = append(funcParams, fmt.Sprintf("%s %s", old, fa.getTypeForID(id, fd)))
 			funcArgs = append(funcArgs, id)
 		}
-		ensure := strings.Replace(templateEnsure, "%cond%", exp, 1)
+		ensure := strings.Replace(templateEnsure, "%shortStmt%", shortStmt, 1)
+		ensure = strings.Replace(ensure, "%cond%", expr, 1)
 		ensure = strings.Replace(ensure, "%contract%", escapeDoubleQuotes(clause.String()), 1)
 		ensuresCode = append(ensuresCode, ensure)
 	}

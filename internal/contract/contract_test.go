@@ -255,7 +255,7 @@ func TestEnsuresExpandedExpr(t *testing.T) {
 
 	for _, tc := range tests {
 		e := Ensures{expr: tc.expr}
-		got, _ := e.ExpandedExpression()
+		_, got, _ := e.ExpandedExpression()
 		assert.Equal(t, tc.expandedExpr, got)
 	}
 }

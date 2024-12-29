@@ -30,19 +30,19 @@ Usage of dbc4go:
 # Current State
 
 This project is in a pre-ALPHA state.
-Syntax of contracts will evolve in future versions.
+Syntax of contracts might evolve in future versions.
 
 ## Available directives to write contracts
 
 ### `@requires`
 
-Describes **preconditions** imposed by functions/methods.     
+Describes **pre-conditions** imposed by functions/methods.     
 
 Syntax:
 
 `@requires` _GO Boolean expression_
 
-As you can see in the example below, the _GO Boolean expression_ must be a valid GO boolean expression as it will be used as the condition in a `if-then` statement.
+As you can see in the example below, the _GO Boolean expression_ must be a valid GO boolean expression as it will be used as the condition in an `if-then` statement.
 
 The expression can make reference to any identifier available in the scope at the beginning of the annotated function (for example: function parameters, method receiver, global variables, other functions)
 
@@ -81,13 +81,13 @@ func NewCar(wheels int, wheelsDrive int, maxSpeedKmh int, manufacturer string) C
                 panic("precondition wheels > 2 not satisfied")
         }
 
-	...
+	// ...
 }
 ```
 
 ### `@ensures`
 
-Describes **postconditions** of a function/method.     
+Describes **post-conditions** of a function/method.     
 
 Syntax:
 
@@ -103,11 +103,13 @@ Example:
 // accelerate the car
 // @requires delta > 0
 // @requires c.speed + delta <= c.maxSpeedKmh
-// @ensures c.speed == @old(c.speed)+delta
-func (c *Car) accelerate(delta int) { ... }
+// @ensures c.speed == @old{c.speed}+delta
+func (c *Car) Accelerate(delta int) { ... }
 ```
 
-where `@old(c.speed)` refers to the value of `c.speed` at the beginning of the method execution.
+where `@old{c.speed}` refers to the value of `c.speed` at the beginning of the method execution.
+
+Limitation: only one `@old` expression per directive.
 
 ### The ==> operator
 The `==>` operator (implication) allows to write more precise and concise contracts like
@@ -115,14 +117,46 @@ The `==>` operator (implication) allows to write more precise and concise contra
 ```go
 // accelerate the car
 // @requires delta > 0
-// @ensures @old(c.speed) + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
-// @ensures @old(c.speed) + delta < c.maxSpeedKmh ==> c.speed == @old(c.speed) + delta
+// @ensures @old{c.speed} + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
 func (c *Car) accelerate(delta int) { ... }
+```
+
+### `@invariant`
+
+Defines an invariant property of a `struct`.
+Invariants are enforced, materialized as `@ensure` clauses, on every method attached to the struct.
+
+Syntax:
+
+`@invariant` _GO Boolean expression_
+
+The expression can make reference to any _private_ field identifier of the `struct` to which the invariant applies to.
+References to field must be a selector expressions of the form `<struct-name>.<field-name>` 
+
+Examples:
+
+```go
+// Car data-model
+// @invariant Car.speed <= Car.maxSpeedKmh
+type Car struct {
+        maxSpeedKmh int
+        speed       int
+        // other fields ...
+}
+```
+
+```go
+// BankAccount data-model
+// @invariant BankAccount.balance >= 0
+type BankAccount struct {
+        balance float
+        // other fields ...
+}
 ```
 
 ### `@unmodified`
 
-Enforces that the function keeps unmodified the given list of identifiers.
+Enforces the function keeps unmodified the given list of identifiers.
 
 Syntax:
 
@@ -133,12 +167,11 @@ Example:
 ```go
 // accelerate the car
 // @requires delta > 0
-// @ensures @old(c.speed) + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
-// @ensures @old(c.speed) + delta < c.maxSpeedKmh ==> c.speed == @old(c.speed) + delta
+// @ensures @old{c.speed} + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
 // @unmodified c.wheels, c.wheelsDrive, c.maxSpeedKmh, c.manufacturer
-func (c *Car) accelerate(delta int) { ... }
+func (c *Car) Accelerate(delta int) { ... }
 ```
-`@unmodified` is just syntax sugar for simplify writing `@ensures id == @old(id)`
+`@unmodified` is just syntax sugar for simplify writing `@ensures id == @old{id}`
 
 ### `@import`
 
@@ -155,38 +188,4 @@ Example:
 // @import strings
 // @requires strings.HasPrefix(e, "my")
 func (c *Container) Add(e string) { ... }
-```
-
-## Planned directives to write contracts
-
-### `@invariant`
-
-Defines an invariant property of a `struct`ure.
-
-Syntax:
-
-`@invariant` _GO Boolean expression_
-
-The expression can make reference to any _private_ field identifier of the `struct` to which the invariant applies to.
-
-Examples:
-
-```go
-// Car data-model
-type Car struct {
-        // @invariant speed <= maxSpeedKmh
-        maxSpeedKmh int
-        speed       int
-        // other fields ...
-}
-```
-
-```go
-// BankAccount data-model
-type BankAccount struct {
-        // @invariant balance >= 0
-        balance float
-        Owner   string
-        // other fields ...
-}
 ```

@@ -4,6 +4,7 @@ package contract
 //go:generate dbc4go -i $GOFILE -o $GOFILE
 
 import (
+	"fmt"
 	"go/ast"
 	"regexp"
 	"strings"
@@ -149,27 +150,35 @@ func NewEnsures(expr, description string) Ensures {
 	return Ensures{expr: expr, description: description}
 }
 
-var Re4old = regexp.MustCompile(`@old\(([^\)]+)\)`)
+var Re4old = regexp.MustCompile(`@old\{(.+)\}`)
 
 // ExpandedExpression yields the expanded ensures' expression
-func (r Ensures) ExpandedExpression() (string, map[string]string) {
-	expr := rewriteImpliesExpr(r.expr)
+func (r Ensures) ExpandedExpression() (shortStmt, expr string, idToOldIdMap map[string]string) {
+	expr = r.expr
+	shortStmt = ""
+	if strings.Contains(r.expr, ";") {
+		parts := strings.SplitN(r.expr, ";", 2)
+		shortStmt, expr = parts[0], parts[1]
+	}
+	expr = rewriteImpliesExpr(expr)
 
 	idToOldID := map[string]string{}
-	// replace @old(id.otherId) by old_id_otherId
+	// replace @old{id.otherId} by old_<number>
 	matches := Re4old.FindAllStringSubmatch(expr, -1)
 	for _, m := range matches {
-		oldAsID := oldID(m[1])
+		oldAsID := oldID()
 		expr = strings.Replace(expr, m[0], oldAsID, 1)
 		idToOldID[m[1]] = oldAsID
 	}
 
-	return expr, idToOldID
+	return shortStmt, expr, idToOldID
 }
 
-func oldID(id string) string {
-	id = strings.ReplaceAll(id, `.`, "_")
-	return "old_" + id
+var oldCounter = 0
+
+func oldID() string {
+	oldCounter++
+	return fmt.Sprintf("old_%d", oldCounter)
 }
 
 func (r Ensures) String() string {

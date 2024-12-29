@@ -135,7 +135,7 @@ func (p Parser) parseUnmodified(expr string) (r []contract.Ensures, err error) {
 	ids := strings.Split(expr, ",")
 	for _, id := range ids {
 		id := strings.TrimSpace(id)
-		expr := fmt.Sprintf("@old(%s) == %s", id, id)
+		expr := fmt.Sprintf("@old{%s} == %s", id, id)
 		description := fmt.Sprintf("[%s unmodified]", id)
 		newEnsure := contract.NewEnsures(expr, description)
 		result = append(result, newEnsure)
