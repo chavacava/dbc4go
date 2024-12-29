@@ -1,4 +1,4 @@
-[x]  check there is not @old in @requires
+[] add type info to solve type-mismatch errors
 [] add actual expression values in panic messages
 [] use templates to generate code
 [] add @forall
