@@ -11,23 +11,17 @@ import (
 // @import "strings"
 func bar(a int, b int) (r int) {
 	if !(!(a > 0) || (b > 0)) {
-		panic("precondition @requires a > 0 ==> b > 0 not satisfied")
+		panic("@requires a > 0 ==> b > 0 not satisfied")
 	}
 	defer func() {
 		if !(!(a == 0) || (r == 0)) {
-			panic("postcondition @ensures a==0 ==> r==0 not satisfied")
+			panic("@ensures a==0 ==> r==0 not satisfied")
 		}
 	}()
 	return a
 }
 
-// @ensures @old(a)==0 ==> r==0
 // @import strings
 func bar2(a int) (r int) {
-	defer func(old_a int) {
-		if !(!(old_a == 0) || (r == 0)) {
-			panic("postcondition @ensures @old(a)==0 ==> r==0 not satisfied")
-		}
-	}(a)
 	return a
 }

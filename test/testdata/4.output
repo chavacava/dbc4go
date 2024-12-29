@@ -10,7 +10,7 @@ import (
 func NewCallArgs(args ...ast.Expr) (r []ast.Expr) {
 	defer func() {
 		if !(len(args) == len(r)) {
-			panic("postcondition @ensures len(args) == len(r) not satisfied")
+			panic("@ensures len(args) == len(r) not satisfied")
 		}
 	}()
 	return append([]ast.Expr{}, args...)

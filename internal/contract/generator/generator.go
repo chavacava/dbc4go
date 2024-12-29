@@ -176,6 +176,7 @@ func (fa fileAnalyzer) positionAsString(pos token.Pos) string {
 // rewriteFuncDecl is in charge of generating contract-enforcing code for functions
 // @requires fd != nil
 func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
+	contract.OldCounter = 0 // TODO: refactor
 	dstFuncDecl := fa.decorator.Dst.Nodes[fd].(*dst.FuncDecl)
 	if fd.Doc != nil {
 		contractParser := contractParser.NewParser()
@@ -241,12 +242,7 @@ func (fa fileAnalyzer) generateCode(c *contract.FuncContract) (stmts []string, e
 	result := []string{}
 	errs = []error{}
 	for _, r := range c.Requires() {
-		stmt, err := fa.generateRequiresCode(r)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("unable to generate code for the clause '%s', got: %w", r, err))
-			continue
-		}
-
+		stmt := fa.generateRequiresCode(r)
 		result = append(result, stmt)
 	}
 
@@ -265,6 +261,9 @@ func (fa fileAnalyzer) generateCode(c *contract.FuncContract) (stmts []string, e
 
 const commentPrefix = "//dbc4go "
 
+// @requires c != nil
+// @ensures len(c.Ensures()) == 0 ==> stmts == nil
+// @ensures len(c.Ensures()) != 0 ==> stmts != nil
 func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []string) {
 	if len(c.Ensures()) == 0 {
 		return nil
@@ -295,19 +294,18 @@ func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []
 	return result
 }
 
-// @ensures  r == "" ==> e != nil
-func (fileAnalyzer) generateRequiresCode(req contract.Requires) (r string, e error) {
+func (fileAnalyzer) generateRequiresCode(req contract.Requires) (r string) {
 	const templateRequire = commentPrefix + `if !(%cond%) { panic("%contract% not satisfied") }`
 	exp := req.ExpandedExpression()
 
 	r = strings.Replace(templateRequire, "%cond%", exp, 1)
 	r = strings.Replace(r, "%contract%", escapeDoubleQuotes(req.String()), 1)
 
-	return r, nil
+	return r
 }
 
 // @requires fd != nil
-// @requires len(clauses) > 0
+// @requires clauses != nil && len(clauses) > 0
 // @ensures r != ""
 func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.FuncDecl) (r string) {
 	const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("%contract% not satisfied") }`
@@ -339,6 +337,7 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.F
 	return r
 }
 
+// @requires fd != nil
 func (fa fileAnalyzer) getTypeForID(id string, fd *ast.FuncDecl) string {
 	for _, param := range fd.Type.Params.List {
 		fields := param.Names

@@ -6,7 +6,7 @@ func bar(a int, b int) (r int) {
     return a
 } 
 
-// @ensures @old(a)==0 ==> r==0
+// @ensures @old{a}==0 ==> r==0
 func bar2(a int) (r int) {
     return a
 }

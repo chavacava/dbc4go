@@ -2,11 +2,11 @@ package foo
 
 var x int
 
-type s struct {
+type S struct {
     a string
 }
 
 // @unmodified x, s.a 
-func unmodified(a int, b int) (r int) {
+func (s S) unmodified(a int, b int) (r int) {
     return a
 } 

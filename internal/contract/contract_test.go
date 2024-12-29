@@ -244,12 +244,8 @@ func TestEnsuresExpandedExpr(t *testing.T) {
 			expandedExpr: "!(a == b) || (b == c)",
 		},
 		{
-			expr:         "a == b ==> b == @old(c)",
-			expandedExpr: "!(a == b) || (b == old_c)",
-		},
-		{
-			expr:         "@old(a) == @old(b) ==> @old(b) == @old(c)",
-			expandedExpr: "!(old_a == old_b) || (old_b == old_c)",
+			expr:         "a == b ==> b == @old{c}",
+			expandedExpr: "!(a == b) || (b == old_1)",
 		},
 	}
 

@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+// OldCounter the counter to use when creating old_ parameters
+// TODO: use a more elegant approach
+var OldCounter = 0
+
 // TypeContract represents a contract associated to a type.
 // Typically a @invariant contract
 type TypeContract struct {
@@ -174,11 +178,9 @@ func (r Ensures) ExpandedExpression() (shortStmt, expr string, idToOldIdMap map[
 	return shortStmt, expr, idToOldID
 }
 
-var oldCounter = 0
-
 func oldID() string {
-	oldCounter++
-	return fmt.Sprintf("old_%d", oldCounter)
+	OldCounter++
+	return fmt.Sprintf("old_%d", OldCounter)
 }
 
 func (r Ensures) String() string {

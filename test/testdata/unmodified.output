@@ -3,19 +3,19 @@ package foo
 
 var x int
 
-type s struct {
+type S struct {
 	a string
 }
 
 // @unmodified x, s.a
-func unmodified(a int, b int) (r int) {
-	defer func(old_x any, old_s_a any) {
+func (s S) unmodified(a int, b int) (r int) {
+	defer func(old_1 any, old_2 any) {
 
-		if !(old_x == x) {
-			panic("postcondition @ensures [x unmodified] @old(x) == x not satisfied")
+		if !(old_1 == x) {
+			panic("@ensures [x unmodified] @old{x} == x not satisfied")
 		}
-		if !(old_s_a == s.a) {
-			panic("postcondition @ensures [s.a unmodified] @old(s.a) == s.a not satisfied")
+		if !(old_2 == s.a) {
+			panic("@ensures [s.a unmodified] @old{s.a} == s.a not satisfied")
 		}
 	}(x, s.a)
 	return a

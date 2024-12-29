@@ -21,18 +21,18 @@ type FuncContract struct {
 // @ensures len(c.ensures) == 0
 func NewFuncContract(target *ast.FuncDecl) (c FuncContract) {
 	if !(target != nil) {
-		panic("precondition @requires [not nil target] target != nil not satisfied")
+		panic("@requires [not nil target] target != nil not satisfied")
 	}
 	defer func() {
 
 		if !(c.target == target) {
-			panic("postcondition @ensures c.target == target not satisfied")
+			panic("@ensures c.target == target not satisfied")
 		}
 		if !(len(c.requires) == 0) {
-			panic("postcondition @ensures len(c.requires) == 0 not satisfied")
+			panic("@ensures len(c.requires) == 0 not satisfied")
 		}
 		if !(len(c.ensures) == 0) {
-			panic("postcondition @ensures len(c.ensures) == 0 not satisfied")
+			panic("@ensures len(c.ensures) == 0 not satisfied")
 		}
 	}()
 	return FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: target}
@@ -42,7 +42,7 @@ func NewFuncContract(target *ast.FuncDecl) (c FuncContract) {
 func (c *FuncContract) Target() (t *ast.FuncDecl) {
 	defer func() {
 		if !(t != nil) {
-			panic("postcondition @ensures t != nil not satisfied")
+			panic("@ensures t != nil not satisfied")
 		}
 	}()
 	return c.target
@@ -53,7 +53,7 @@ func (c *FuncContract) Target() (t *ast.FuncDecl) {
 func (c *FuncContract) AddRequires(r Requires) {
 	defer func() {
 		if !(c.requires[len(c.requires)-1] == r) {
-			panic("postcondition @ensures c.requires[len(c.requires)-1] == r not satisfied")
+			panic("@ensures c.requires[len(c.requires)-1] == r not satisfied")
 		}
 	}()
 	c.requires = append(c.requires, r)
@@ -64,7 +64,7 @@ func (c *FuncContract) AddRequires(r Requires) {
 func (c *FuncContract) Requires() (r []Requires) {
 	defer func() {
 		if !(len(r) == len(c.requires)) {
-			panic("postcondition @ensures len(r) == len(c.requires) not satisfied")
+			panic("@ensures len(r) == len(c.requires) not satisfied")
 		}
 	}()
 	return c.requires
@@ -75,7 +75,7 @@ func (c *FuncContract) Requires() (r []Requires) {
 func (c *FuncContract) AddEnsures(e Ensures) {
 	defer func() {
 		if !(c.ensures[len(c.ensures)-1] == e) {
-			panic("postcondition @ensures c.ensures[len(c.ensures)-1] == e not satisfied")
+			panic("@ensures c.ensures[len(c.ensures)-1] == e not satisfied")
 		}
 	}()
 	c.ensures = append(c.ensures, e)
@@ -95,7 +95,7 @@ type Requires struct {
 // @requires expr != ""
 func NewRequires(expr string) Requires {
 	if !(expr != "") {
-		panic("precondition @requires expr != \"\" not satisfied")
+		panic("@requires expr != \"\" not satisfied")
 	}
 
 	return Requires{expr: expr}
@@ -120,7 +120,7 @@ type Ensures struct {
 func NewEnsures(expr string) Ensures {
 	defer func() {
 		if !(expr != "") {
-			panic("postcondition @ensures expr != \"\" not satisfied")
+			panic("@ensures expr != \"\" not satisfied")
 		}
 	}()
 	return Ensures{expr: expr}
