@@ -270,7 +270,7 @@ func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []
 		return nil
 	}
 	result := []string{}
-	const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("type invariant %contract% not satisfied") }`
+	const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("(type invariant) %contract% not satisfied") }`
 	clauses := c.Ensures()
 	ensuresCode := make([]string, len(clauses))
 	for _, clause := range clauses {
