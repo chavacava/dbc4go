@@ -25,7 +25,7 @@ func NewBankAccount(initialBalance int) (account BankAccount) {
 // Credit the given amount to the account
 // @requires [can not credit a closed account] !a.closed
 // @requires amount > 0 && (a.balance + amount) <= maxBalance
-// @ensures a.balance == @old{a.balance} + amount
+// @ensures a.balance == @old{a.balance}.(int) + amount
 // Ensure other fields are unchanged:
 // @unmodified a.closed
 func (a *BankAccount) Credit(amount int) {
@@ -35,7 +35,7 @@ func (a *BankAccount) Credit(amount int) {
 // Debit the given amount from the account
 // @requires !a.closed
 // @requires amount > 0 && (a.balance - amount) >= minBalance
-// @ensures a.balance == @old{a.balance} - amount
+// @ensures a.balance == @old{a.balance}.(int) - amount
 // Ensure other fields are unchanged:
 // @unmodified a.closed
 func (a *BankAccount) Debit(amount int) {
