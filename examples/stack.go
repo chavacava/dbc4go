@@ -14,7 +14,7 @@ func (s *Stack) Push(data int) {
 
 // Pop pops the top element from the stack; returns no nil error if call on empty stack.
 // @ensures [if no empty then stack shrinks by one element] !s.IsEmpty() ==> @old{len(s.items)} == len(s.items) + 1
-// @ensures [if call on empty then error] s.IsEmpty() ==> err != nil
+// @ensures [if call on empty then error] @old{s.IsEmpty()} ==> err != nil
 func (s *Stack) Pop() (err error) {
 	// implementation
 }
