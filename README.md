@@ -4,7 +4,7 @@
 
 # dbc4go
 
-[Design by Contract&trade;](https://en.wikipedia.org/wiki/Design_by_contract) for GO is a code generator that takes GO code annotated with contracts and generates code that enforces those contracts.  
+[Design by Contract&trade;](https://en.wikipedia.org/wiki/Design_by_contract) for GO is a code generator that takes GO code annotated with contracts and generates code that enforces those contracts at runtime.  
 
 <p align="center">
   <img src="./assets/mascots.jpg" alt="" width="300">
@@ -16,6 +16,8 @@
 Contracts are embedded into comments, therefore code annotated with contracts is valid GO code.
 
 This project uses contracts itself! Check the source code and the `Makefile` to see how.
+
+You can also **check the [examples](./examples/)**.
 
 # Usage
 
@@ -42,9 +44,10 @@ Syntax:
 
 `@requires` _GO Boolean expression_
 
-As you can see in the example below, the _GO Boolean expression_ must be a valid GO boolean expression as it will be used as the condition in an `if-then` statement.
+As you can see in the example below, the _GO Boolean expression_ must be a valid GO Boolean expression as it will be used as the condition in an `if-then` statement.
 
 The expression can make reference to any identifier available in the scope at the beginning of the annotated function (for example: function parameters, method receiver, global variables, other functions)
+
 
 Example:
 
@@ -84,6 +87,14 @@ func NewCar(wheels int, wheelsDrive int, maxSpeedKmh int, manufacturer string) C
 	// ...
 }
 ```
+Please notice that _short-statements_ are supported as part of _GO Boolean expression_, therefore it's okay to write a contract like the following:
+
+```go
+// Accelerate the car
+// @requires delta > 0
+// @requires targetSpeed := c.speed + delta; targetSpeed <= c.maxSpeedKmh
+func (c *Car) Accelerate(delta int) { ... }
+```
 
 ### `@ensures`
 
@@ -100,25 +111,27 @@ Expressions in `@ensure` clauses can use the `@old` operator to refer to the sta
 Example:
 
 ```go
-// accelerate the car
+// Accelerate the car
 // @requires delta > 0
 // @requires c.speed + delta <= c.maxSpeedKmh
 // @ensures c.speed == @old{c.speed}+delta
 func (c *Car) Accelerate(delta int) { ... }
 ```
-
 where `@old{c.speed}` refers to the value of `c.speed` at the beginning of the method execution.
 
-Limitation: only one `@old` expression per directive.
+Limitations: 
+1. at most one `@old` expression in the short-statement and one in the Boolean expression.
+2. `dbc4go` doesn't have type information of expressions inside an `@old` annotation therefore in some cases you need to add type casts to obtain compilable code. For example, to indicate that `@old{someExpression}` is of type `float` you must write `@old{someExpression}.(float)`
 
 ### The ==> operator
 The `==>` operator (implication) allows to write more precise and concise contracts like
 
 ```go
-// accelerate the car
+// Accelerate the car
 // @requires delta > 0
-// @ensures @old{c.speed} + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
-func (c *Car) accelerate(delta int) { ... }
+// @ensures @old{c.speed}.(int) + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
+// @ensures oldSpeed := @old{c.speed}.(int); oldSpeed + delta < c.maxSpeedKmh ==> c.speed == oldSpeed + delta
+func (c *Car) Accelerate(delta int) { ... }
 ```
 
 ### `@invariant`
@@ -167,9 +180,10 @@ Syntax:
 Example:
 
 ```go
-// accelerate the car
+// Accelerate the car
 // @requires delta > 0
-// @ensures @old{c.speed} + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
+// @ensures @old{c.speed}.(int) + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
+// @ensures oldSpeed := @old{c.speed}.(int); oldSpeed + delta < c.maxSpeedKmh ==> c.speed == oldSpeed + delta
 // @unmodified c.wheels, c.wheelsDrive, c.maxSpeedKmh, c.manufacturer
 func (c *Car) Accelerate(delta int) { ... }
 ```
@@ -190,4 +204,17 @@ Example:
 // @import strings
 // @requires strings.HasPrefix(e, "my")
 func (c *Container) Add(e string) { ... }
+```
+
+### Contract Descriptions
+
+You can document your contracts by adding a descriptions delimited by `[` `]`.
+
+```go
+// BankAccount data-model
+// @invariant [Account's balance is never negative] BankAccount.balance >= 0
+type BankAccount struct {
+        balance float
+        // other fields ...
+}
 ```
