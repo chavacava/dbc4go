@@ -37,12 +37,19 @@ func (p Parser) ParseTypeContract(typeContract *contract.TypeContract, line stri
 			return fmt.Errorf("@old can not be used in @invariant expressions: %s", expr)
 		}
 
-		clause, err := p.parseEnsures(expr, description) // invariants are ensures that apply to all methods of the type
+		ensuresClause, err := p.parseEnsures(expr, description) // invariants are ensures that apply to all methods of the type
 		if err != nil {
 			return fmt.Errorf("invalid @invariant clause: %w", err)
 		}
 
-		typeContract.AddEnsures(clause)
+		typeContract.AddEnsures(ensuresClause)
+
+		requiresClause, err := p.parseRequires(expr, description) // invariants are, also, requires that apply to all methods of the type
+		if err != nil {
+			return fmt.Errorf("invalid @invariant clause: %w", err)
+		}
+
+		typeContract.AddRequires(requiresClause)
 	case "import":
 		clause, err := p.parseImport(expr)
 		if err != nil {

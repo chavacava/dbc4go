@@ -242,7 +242,7 @@ func (fa fileAnalyzer) generateCode(c *contract.FuncContract) (stmts []string, e
 	result := []string{}
 	errs = []error{}
 	for _, r := range c.Requires() {
-		stmt := fa.generateRequiresCode(r)
+		stmt := fa.generateRequiresCode(r, "")
 		result = append(result, stmt)
 	}
 
@@ -265,26 +265,32 @@ const commentPrefix = "//dbc4go "
 // @ensures len(c.Ensures()) == 0 ==> stmts == nil
 // @ensures len(c.Ensures()) != 0 ==> stmts != nil
 func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []string) {
-	if len(c.Ensures()) == 0 {
-		return nil
-	}
 	result := []string{}
-	const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("(type invariant) %contract% not satisfied") }`
-	clauses := c.Ensures()
-	ensuresCode := make([]string, len(clauses))
-	for _, clause := range clauses {
-		shortStmt, expr, _ := clause.ExpandedExpression()
-		if shortStmt != "" {
-			shortStmt = shortStmt + "; "
-		}
-		ensure := strings.Replace(templateEnsure, "%shortStmt%", shortStmt, 1)
-		ensure = strings.Replace(ensure, "%cond%", expr, 1)
-		ensure = strings.Replace(ensure, "%contract%", escapeDoubleQuotes(clause.String()), 1)
-		ensuresCode = append(ensuresCode, ensure)
+
+	// Generate requires for invariants
+	for _, req := range c.Requires() {
+		result = append(result, fa.generateRequiresCode(req, "(type invariant) "))
 	}
-	const templateDeferredFunction = commentPrefix + `defer func(){%checks%}()`
-	r := strings.Replace(templateDeferredFunction, "%checks%", strings.Join(ensuresCode, "\n"), 1)
-	result = append(result, r)
+
+	// Generate ensures for invariants
+	if len(c.Ensures()) != 0 {
+		const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("(type invariant) %contract% not satisfied") }`
+		clauses := c.Ensures()
+		ensuresCode := make([]string, len(clauses))
+		for _, clause := range clauses {
+			shortStmt, expr, _ := clause.ExpandedExpression()
+			if shortStmt != "" {
+				shortStmt = shortStmt + "; "
+			}
+			ensure := strings.Replace(templateEnsure, "%shortStmt%", shortStmt, 1)
+			ensure = strings.Replace(ensure, "%cond%", expr, 1)
+			ensure = strings.Replace(ensure, "%contract%", escapeDoubleQuotes(clause.String()), 1)
+			ensuresCode = append(ensuresCode, ensure)
+		}
+		const templateDeferredFunction = commentPrefix + `defer func(){%checks%}()`
+		r := strings.Replace(templateDeferredFunction, "%checks%", strings.Join(ensuresCode, "\n"), 1)
+		result = append(result, r)
+	}
 
 	// merge new imports into imports list
 	for k, v := range c.Imports() {
@@ -294,11 +300,12 @@ func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []
 	return result
 }
 
-func (fileAnalyzer) generateRequiresCode(req contract.Requires) (r string) {
-	const templateRequire = commentPrefix + `if !(%cond%) { panic("%contract% not satisfied") }`
+func (fileAnalyzer) generateRequiresCode(req contract.Requires, panicMsgPrefix string) (r string) {
+	const templateRequire = commentPrefix + `if !(%cond%) { panic("%msgPrefix%%contract% not satisfied") }`
 	exp := req.ExpandedExpression()
 
 	r = strings.Replace(templateRequire, "%cond%", exp, 1)
+	r = strings.Replace(r, "%msgPrefix%", panicMsgPrefix, 1)
 	r = strings.Replace(r, "%contract%", escapeDoubleQuotes(req.String()), 1)
 
 	return r

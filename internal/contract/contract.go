@@ -19,6 +19,7 @@ var OldCounter = 0
 // Typically a @invariant contract
 type TypeContract struct {
 	ensures        []Ensures
+	requires       []Requires
 	imports        map[string]struct{}
 	targetTypeName string
 }
@@ -28,9 +29,11 @@ type TypeContract struct {
 // @ensures c.targetTypeName == target
 // @ensures len(c.ensures) == 0
 // @ensures len(c.imports) == 0
+// TODO update contract to ensure requires
 func NewTypeContract(target string) (c *TypeContract) {
 	return &TypeContract{
 		ensures:        []Ensures{},
+		requires:       []Requires{},
 		targetTypeName: target,
 		imports:        map[string]struct{}{},
 	}
@@ -47,6 +50,19 @@ func (c *TypeContract) AddEnsures(e Ensures) {
 // @ensures len(r) == len(c.ensures)
 func (c *TypeContract) Ensures() (r []Ensures) {
 	return c.ensures
+}
+
+// AddRequires adds a requires to this contract
+// @ensures len(c.requires) == len(@old(c.requires)) + 1
+// @ensures c.requires[len(c.requires)-1] == r
+func (c *TypeContract) AddRequires(r Requires) {
+	c.requires = append(c.requires, r)
+}
+
+// Requires yields requires clauses of this contract
+// @ensures len(r) == len(c.requires)
+func (c *TypeContract) Requires() (r []Requires) {
+	return c.requires
 }
 
 // AddImport adds an import to this contract

@@ -124,7 +124,9 @@ func (c *Car) accelerate(delta int) { ... }
 ### `@invariant`
 
 Defines an invariant property of a `struct`.
-Invariants are enforced, materialized as `@ensure` clauses, on every method attached to the struct.
+An invariant property is a property of the struct that should always hold.
+Every method attached to the struct can assume the invariants hold and must preserve the invariants.
+Invariants are enforced, materialized as `@requires` and `@ensures` clauses, on every method attached to the struct.
 
 Syntax:
 
