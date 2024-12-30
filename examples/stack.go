@@ -7,24 +7,24 @@ type Stack struct {
 
 // Push pushes data in the stack.
 // @ensures [stack grows by one element] @old{len(s.items)} == len(s.items) - 1
-// @ensures [new data is on top of the stack] value, err := s.Top(); err == nil && value == data
+// @ensures [new data is on top of the stack] s.Top() == data
 func (s *Stack) Push(data int) {
-	// implementation
+	s.items = append(s.items, data)
 }
 
-// Pop pops the top element from the stack; returns no nil error if call on empty stack.
-// @ensures [if no empty then stack shrinks by one element] !s.IsEmpty() ==> @old{len(s.items)} == len(s.items) + 1
-// @ensures [if call on empty then error] @old{s.IsEmpty()} ==> err != nil
-func (s *Stack) Pop() (err error) {
-	// implementation
+// Pop pops the top element from the stack.
+// @requires [non empty stack] !s.IsEmpty()
+// @ensures [stack shrinks by one element] @old{len(s.items)} == len(s.items) + 1
+func (s *Stack) Pop() {
+	s.items = s.items[:len(s.items)-1]
 }
 
-// Top yields the data on the top of the stack; error if the stack is empty.
-// @ensures [if not empty the resulting data is the top of the stack and no error] !s.IsEmpty() ==> data == s.items[len(s.items)-1] && err == nil
-// @ensures [if empty then error] s.IsEmpty() ==> err != nil
+// Top yields the data on the top of the stack.
+// @requires [non empty stack] !s.IsEmpty()
+// @ensures [resulting data is the top of the stack] data == s.items[len(s.items)-1]
 // @ensures [stack top element is not modified] @old{s.items[len(s.items)-1]} == s.items[len(s.items)-1]
-func (s *Stack) Top() (data int, err error) {
-	// implementation
+func (s *Stack) Top() (data int) {
+	return s.items[len(s.items)-1]
 }
 
 // IsEmpty returns true if the stack has no data, false otherwise.
@@ -32,5 +32,5 @@ func (s *Stack) Top() (data int, err error) {
 // @ensures [if not empty then false] @old{len(s.items)} != 0 ==> result == false
 // @unmodified [stack size is unmodified] len(s.items)
 func (s *Stack) IsEmpty() (result bool) {
-	// implementation
+	return len(s.items) == 0
 }
