@@ -16,24 +16,24 @@ func NewSet() (s *Set) {
 }
 
 // Add inserts an element into the set
-// @ensure [element is present in the set] s.Contains(value)
-// @ensure [cardinality grows if new element] @old{s.Contains(value)} ==> @old{len(s.elements)+1} == len(s.elements)
-// @ensure [cardinality remains the same if no new element] @old{!s.Contains(value)} ==> @old{len(s.elements)} == len(s.elements)
+// @ensures [element is present in the set] s.Contains(value)
+// @ensures [cardinality grows if new element] @old{s.Contains(value)} ==> @old{len(s.elements)} == len(s.elements) - 1
+// @ensures [cardinality remains the same if no new element] @old{!s.Contains(value)} ==> @old{len(s.elements)} == len(s.elements)
 func (s *Set) Add(value string) {
 	s.elements[value] = struct{}{}
 }
 
 // Remove deletes an element from the set
-// @ensure [element is not present in the set] !s.Contains(value)
-// @ensure [cardinality shirks if element was in the set] @old{s.Contains(value)} ==> @old{len(s.elements)-1} == len(s.elements)
-// @ensure [cardinality remains the same if element was not in the set] @old{!s.Contains(value)} ==> @old{len(s.elements)} == len(s.elements)
+// @ensures [element is not present in the set] !s.Contains(value)
+// @ensures [cardinality shirks if element was in the set] @old{s.Contains(value)} ==> @old{len(s.elements)-1} == len(s.elements)
+// @ensures [cardinality remains the same if element was not in the set] @old{!s.Contains(value)} ==> @old{len(s.elements)} == len(s.elements)
 func (s *Set) Remove(value string) {
 	delete(s.elements, value)
 }
 
 // Contains checks if an element is in the set
-// @ensure _, ok := s.elements[value]; ok ==> result == true
-// @ensure _, ok := s.elements[value]; !ok ==> result != true
+// @ensures _, ok := s.elements[value]; ok ==> result == true
+// @ensures _, ok := s.elements[value]; !ok ==> result != true
 // @unmodified len(s.elements)
 func (s *Set) Contains(value string) (result bool) {
 	_, found := s.elements[value]
@@ -48,7 +48,7 @@ func (s *Set) Size() (result int) {
 }
 
 // List returns all elements in the set as a slice
-// @ensure len(result) == @old{len(s.elements)}
+// @ensures len(result) == @old{len(s.elements)}
 // @unmodified len(s.elements)
 func (s *Set) List() (result []string) {
 	keys := make([]string, 0, len(s.elements))
