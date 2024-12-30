@@ -6,6 +6,7 @@ package contract
 import (
 	"fmt"
 	"go/ast"
+	"maps"
 	"regexp"
 	"strings"
 )
@@ -154,8 +155,6 @@ func NewEnsures(expr, description string) Ensures {
 	return Ensures{expr: expr, description: description}
 }
 
-var Re4old = regexp.MustCompile(`@old\{(.+)\}`)
-
 // ExpandedExpression yields the expanded ensures' expression
 func (r Ensures) ExpandedExpression() (shortStmt, expr string, idToOldIdMap map[string]string) {
 	expr = r.expr
@@ -166,18 +165,31 @@ func (r Ensures) ExpandedExpression() (shortStmt, expr string, idToOldIdMap map[
 	}
 	expr = rewriteImpliesExpr(expr)
 
-	idToOldID := map[string]string{}
-	// replace @old{id.otherId} by old_<number>
-	matches := Re4old.FindAllStringSubmatch(expr, -1)
-	for _, m := range matches {
-		oldAsID := oldID()
-		expr = strings.Replace(expr, m[0], oldAsID, 1)
-		idToOldID[m[1]] = oldAsID
-	}
+	// replace @old{id.otherId} by old_<number> in short-statement
+	shortStmt, shortStmtMappings := expandOldExpressions(shortStmt)
+	// replace @old{id.otherId} by old_<number> in expression
+	expr, exprMappings := expandOldExpressions(expr)
+	idToOldIdMap = map[string]string{}
+	maps.Copy[map[string]string, map[string]string](idToOldIdMap, shortStmtMappings)
+	maps.Copy[map[string]string, map[string]string](idToOldIdMap, exprMappings)
 
-	return shortStmt, expr, idToOldID
+	return shortStmt, expr, idToOldIdMap
 }
 
+var Re4old = regexp.MustCompile(`@old\{(.+)\}`)
+
+// Replace @old{<expression>} by old_<number> in the given string
+// It also returns the mapping between the <expression> and old_<number>
+func expandOldExpressions(str string) (string, map[string]string) {
+	exp2id := map[string]string{}
+	matches := Re4old.FindAllStringSubmatch(str, -1)
+	for _, m := range matches {
+		oldAsID := oldID()
+		str = strings.Replace(str, m[0], oldAsID, 1)
+		exp2id[m[1]] = oldAsID
+	}
+	return str, exp2id
+}
 func oldID() string {
 	OldCounter++
 	return fmt.Sprintf("old_%d", OldCounter)
