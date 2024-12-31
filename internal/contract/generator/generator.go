@@ -178,6 +178,16 @@ func (fa fileAnalyzer) positionAsString(pos token.Pos) string {
 func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
 	contract.OldCounter = 0 // TODO: refactor
 	dstFuncDecl := fa.decorator.Dst.Nodes[fd].(*dst.FuncDecl)
+
+	contractScope := []string{commentPrefix + "{ // Open contract scope "}
+	defer func() {
+		codeWasGenerated := len(contractScope) > 1
+		if codeWasGenerated {
+			contractScope = append(contractScope, commentPrefix+"} // Close contract scope")
+			dstFuncDecl.Body.Decorations().Start.Append(contractScope...)
+		}
+	}()
+
 	if fd.Doc != nil {
 		contractParser := contractParser.NewParser()
 		contract := contract.NewFuncContract(fd)
@@ -195,7 +205,7 @@ func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
 			log.Printf("Warning: %v", err)
 		}
 
-		dstFuncDecl.Body.Decorations().Start.Append(contractStmts...)
+		contractScope = append(contractScope, contractStmts...)
 	}
 
 	// Also add code for enforce invariants if available
@@ -220,7 +230,7 @@ func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
 	for i, code := range invariantCode {
 		invariantCodeForMethod[i] = strings.ReplaceAll(code, receiverType+".", receiverName+".")
 	}
-	dstFuncDecl.Body.Decorations().Start.Append(invariantCodeForMethod...)
+	contractScope = append(contractScope, invariantCodeForMethod...)
 }
 
 func (fa fileAnalyzer) getReceiverTypeName(receiver *ast.FieldList) string {
@@ -320,7 +330,11 @@ func (fileAnalyzer) generateRequiresCode(req contract.Requires, panicMsgPrefix s
 func (fileAnalyzer) generateLetCode(let contract.Let) (r string) {
 	const templateLet = commentPrefix + `%decl% // %description%`
 	r = strings.Replace(templateLet, "%decl%", let.ExpandedExpression(), 1)
-	r = strings.Replace(r, "%description%", let.Description(), 1)
+	description := let.Description()
+	if description == "" {
+		description = " defined with @let"
+	}
+	r = strings.Replace(r, "%description%", description, 1)
 
 	return r
 }
