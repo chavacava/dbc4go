@@ -241,6 +241,12 @@ func (fa fileAnalyzer) getReceiverTypeName(receiver *ast.FieldList) string {
 func (fa fileAnalyzer) generateCode(c *contract.FuncContract) (stmts []string, errs []error) {
 	result := []string{}
 	errs = []error{}
+
+	for _, let := range c.Lets() {
+		stmt := fa.generateLetCode(let)
+		result = append(result, stmt)
+	}
+
 	for _, r := range c.Requires() {
 		stmt := fa.generateRequiresCode(r, "")
 		result = append(result, stmt)
@@ -307,6 +313,14 @@ func (fileAnalyzer) generateRequiresCode(req contract.Requires, panicMsgPrefix s
 	r = strings.Replace(templateRequire, "%cond%", exp, 1)
 	r = strings.Replace(r, "%msgPrefix%", panicMsgPrefix, 1)
 	r = strings.Replace(r, "%contract%", escapeDoubleQuotes(req.String()), 1)
+
+	return r
+}
+
+func (fileAnalyzer) generateLetCode(let contract.Let) (r string) {
+	const templateLet = commentPrefix + `%decl% // %description%`
+	r = strings.Replace(templateLet, "%decl%", let.ExpandedExpression(), 1)
+	r = strings.Replace(r, "%description%", let.Description(), 1)
 
 	return r
 }

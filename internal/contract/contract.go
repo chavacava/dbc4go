@@ -40,7 +40,7 @@ func NewTypeContract(target string) (c *TypeContract) {
 }
 
 // AddEnsures adds a ensures to this contract
-// ensures len(c.ensures) == len(@old(c.ensures)) + 1
+// ensures len(c.ensures) == len(@old{c.ensures}) + 1
 // @ensures c.ensures[len(c.ensures)-1] == e
 func (c *TypeContract) AddEnsures(e Ensures) {
 	c.ensures = append(c.ensures, e)
@@ -53,7 +53,7 @@ func (c *TypeContract) Ensures() (r []Ensures) {
 }
 
 // AddRequires adds a requires to this contract
-// @ensures len(c.requires) == len(@old(c.requires)) + 1
+// @ensures len(c.requires) == len(@old{c.requires}) + 1
 // @ensures c.requires[len(c.requires)-1] == r
 func (c *TypeContract) AddRequires(r Requires) {
 	c.requires = append(c.requires, r)
@@ -80,6 +80,7 @@ type FuncContract struct {
 	requires []Requires
 	ensures  []Ensures
 	imports  map[string]struct{}
+	lets     []Let
 	target   *ast.FuncDecl
 }
 
@@ -100,7 +101,7 @@ func (c *FuncContract) Target() (t *ast.FuncDecl) {
 }
 
 // AddRequires adds a requires to this contract
-// ensures len(c.requires) == len(@old(c.requires)) + 1
+// ensures len(c.requires) == len(@old{c.requires}) + 1
 // @ensures c.requires[len(c.requires)-1] == r
 func (c *FuncContract) AddRequires(r Requires) {
 	c.requires = append(c.requires, r)
@@ -113,7 +114,7 @@ func (c *FuncContract) Requires() (r []Requires) {
 }
 
 // AddEnsures adds a ensures to this contract
-// ensures len(c.ensures) == len(@old(c.ensures)) + 1
+// ensures len(c.ensures) == len(@old{c.ensures}) + 1
 // @ensures c.ensures[len(c.ensures)-1] == e
 func (c *FuncContract) AddEnsures(e Ensures) {
 	c.ensures = append(c.ensures, e)
@@ -133,6 +134,40 @@ func (c *FuncContract) AddImport(path string) {
 // Imports returns imports required by this contract
 func (c *FuncContract) Imports() map[string]struct{} {
 	return c.imports
+}
+
+// AddLet adds a requires to this contract
+// @ensures len(c.lets) == @old{len(c.lets)}.(int) + 1
+// @ensures c.lets[len(c.lets)-1] == l
+func (c *FuncContract) AddLet(l Let) {
+	c.lets = append(c.lets, l)
+}
+
+// Requires yields requires clauses of this contract
+// @ensures len(r) == len(c.lets)
+func (c *FuncContract) Lets() (r []Let) {
+	return c.lets
+}
+
+type Let struct {
+	expr        string
+	description string
+}
+
+// NewLet creates a Let object
+// @requires expr != ""
+func NewLet(expr, description string) Let {
+	return Let{expr: expr, description: description}
+}
+
+// ExpandedExpression yields the expanded let expression
+func (l Let) ExpandedExpression() string {
+	return l.expr
+}
+
+// Description yields the let description
+func (l Let) Description() string {
+	return l.description
 }
 
 // Requires is a @requires clause of a contract

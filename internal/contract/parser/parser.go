@@ -100,6 +100,17 @@ func (p Parser) ParseFuncContract(funcContract *contract.FuncContract, line stri
 		}
 
 		funcContract.AddImport(clause)
+	case "let":
+		if contract.Re4old.MatchString(expr) {
+			return fmt.Errorf("@old can not be used in @let expressions: %s", expr)
+		}
+
+		clause, err := p.parseLet(expr, description)
+		if err != nil {
+			return fmt.Errorf("invalid @let clause: %w", err)
+		}
+
+		funcContract.AddLet(clause)
 	case "unmodified":
 		clauses, err := p.parseUnmodified(expr)
 		if err != nil {
@@ -114,6 +125,11 @@ func (p Parser) ParseFuncContract(funcContract *contract.FuncContract, line stri
 	}
 
 	return nil
+}
+
+// @requires expr != ""
+func (p Parser) parseLet(expr string, description string) (r contract.Let, err error) {
+	return contract.NewLet(expr, description), nil
 }
 
 // @requires path != ""
