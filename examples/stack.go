@@ -21,15 +21,18 @@ func (s *Stack) Pop() {
 
 // Top yields the data on the top of the stack.
 // @requires [non empty stack] !s.IsEmpty()
-// @ensures [resulting data is the top of the stack] data == s.items[len(s.items)-1]
-// @ensures [stack top element is not modified] @old{s.items[len(s.items)-1]} == s.items[len(s.items)-1]
+// @ensures [resulting data is the top of the stack] /
+// data == s.items[len(s.items)-1]
+// @ensures [stack top element is not modified] /
+// @old{s.items[len(s.items)-1]} == s.items[len(s.items)-1]
 func (s *Stack) Top() (data int) {
 	return s.items[len(s.items)-1]
 }
 
 // IsEmpty returns true if the stack has no data, false otherwise.
-// @ensures [if empty then true] @old{len(s.items)} == 0 ==> result == true
-// @ensures [if not empty then false] @old{len(s.items)} != 0 ==> result == false
+// @let initialSize := len(s.items)
+// @ensures [if empty then true] initialSize == 0 ==> result == true
+// @ensures [if not empty then false] initialSize != 0 ==> result == false
 // @unmodified [stack size is unmodified] len(s.items)
 func (s *Stack) IsEmpty() (result bool) {
 	return len(s.items) == 0
