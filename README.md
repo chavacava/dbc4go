@@ -123,14 +123,35 @@ Limitations:
 1. at most one `@old` expression in the short-statement and one in the Boolean expression.
 2. `dbc4go` doesn't have type information of expressions inside an `@old` annotation therefore in some cases you need to add type casts to obtain compilable code. For example, to indicate that `@old{someExpression}` is of type `float` you must write `@old{someExpression}.(float)`
 
+An alternative to `@old` annotations is the use of `@let` (see below) thus the previous example could be also written as:
+
+```go
+// Accelerate the car
+// @requires delta > 0
+// @requires c.speed + delta <= c.maxSpeedKmh
+// @let initialSpeed := c.speed
+// @ensures c.speed == initialSpeed + delta
+func (c *Car) Accelerate(delta int) { ... }
+```
+### `@let`
+Captures an expression's value into a variable at the beginning of the function execution.
+The variable can be used in `@ensures` and `@requires`
+
+Syntax:
+
+`@let` _id_ `:=` _expression_
+ 
+_id_ must be a valid GO identifier and _expression_ a valid GO expression in the context of the annotated function.
+
 ### The ==> operator
 The `==>` operator (implication) allows to write more precise and concise contracts like
 
 ```go
 // Accelerate the car
 // @requires delta > 0
-// @ensures @old{c.speed}.(int) + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
-// @ensures oldSpeed := @old{c.speed}.(int); oldSpeed + delta < c.maxSpeedKmh ==> c.speed == oldSpeed + delta
+// @let initialSpeed := c.speed
+// @ensures initialSpeed + delta < c.maxSpeedKmh ==> c.speed == initialSpeed + delta
+// @ensures initialSpeed + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
 func (c *Car) Accelerate(delta int) { ... }
 ```
 
@@ -182,8 +203,9 @@ Example:
 ```go
 // Accelerate the car
 // @requires delta > 0
-// @ensures @old{c.speed}.(int) + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
-// @ensures oldSpeed := @old{c.speed}.(int); oldSpeed + delta < c.maxSpeedKmh ==> c.speed == oldSpeed + delta
+// @let initialSpeed := c.speed
+// @ensures initialSpeed + delta < c.maxSpeedKmh ==> c.speed == initialSpeed + delta
+// @ensures initialSpeed + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
 // @unmodified c.wheels, c.wheelsDrive, c.maxSpeedKmh, c.manufacturer
 func (c *Car) Accelerate(delta int) { ... }
 ```
@@ -206,9 +228,11 @@ Example:
 func (c *Container) Add(e string) { ... }
 ```
 
-### Contract Descriptions
+### Contract Syntax 
 
-You can document your contracts by adding a descriptions delimited by `[` `]`.
+#### Clause Descriptions
+
+You can document your contracts clauses by adding a description delimited by `[` `]`.
 
 ```go
 // BankAccount data-model
@@ -218,3 +242,17 @@ type BankAccount struct {
         // other fields ...
 }
 ```
+
+#### Multiline Clause
+
+Sometimes, for ease the reading of clauses it's convenient to write them on more than a single line.
+To do so, you can use `/` to break clauses into multiple lines.
+
+```go
+// BankAccount data-model
+// @invariant /
+// [Account's balance is never negative] /
+// BankAccount.balance >= 0
+type BankAccount struct {
+```
+ 
