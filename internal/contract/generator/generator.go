@@ -361,19 +361,21 @@ func (fileAnalyzer) generateLetCode(let contract.Let) (r string) {
 // @requires clauses != nil && len(clauses) > 0
 // @ensures r != ""
 func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.FuncDecl) (r string) {
+	const templateOldVarDecl = commentPrefix + `%oldId% := %expr%`
 	const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("%contract% not satisfied") }`
 
 	ensuresCode := make([]string, len(clauses))
-	funcParams := []string{}
-	funcArgs := []string{}
+	oldVarDecls := []string{}
+	//funcArgs := []string{}
 	for _, clause := range clauses {
 		shortStmt, expr, idToOld := clause.ExpandedExpression()
 		if shortStmt != "" {
 			shortStmt = shortStmt + "; "
 		}
-		for id, old := range idToOld {
-			funcParams = append(funcParams, fmt.Sprintf("%s %s", old, fa.getTypeForID(id, fd)))
-			funcArgs = append(funcArgs, id)
+		for expr, oldId := range idToOld {
+			decl := strings.Replace(templateOldVarDecl, "%oldId%", oldId, 1)
+			decl = strings.Replace(decl, "%expr%", expr, 1)
+			oldVarDecls = append(oldVarDecls, decl)
 		}
 		ensure := strings.Replace(templateEnsure, "%shortStmt%", shortStmt, 1)
 		ensure = strings.Replace(ensure, "%cond%", expr, 1)
@@ -381,11 +383,10 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.F
 		ensuresCode = append(ensuresCode, ensure)
 	}
 
-	const templateDeferredFunction = commentPrefix + `defer func(%params%){%checks%}(%args%)`
+	r += strings.Join(oldVarDecls, "\n")
 
-	r = strings.Replace(templateDeferredFunction, "%params%", strings.Join(funcParams, ","), 1)
-	r = strings.Replace(r, "%checks%", strings.Join(ensuresCode, "\n"), 1)
-	r = strings.Replace(r, "%args%", strings.Join(funcArgs, ","), 1)
+	const templateDeferredFunction = commentPrefix + "\ndefer func(){%checks%}()"
+	r += strings.Replace(templateDeferredFunction, "%checks%", strings.Join(ensuresCode, "\n"), 1)
 
 	return r
 }
