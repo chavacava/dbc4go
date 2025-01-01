@@ -281,7 +281,7 @@ func (fa fileAnalyzer) generateCode(c *contract.FuncContract) (stmts []string, e
 	}
 
 	if len(c.Ensures()) > 0 {
-		stmt := fa.generateEnsuresCode(c.Ensures(), c.Target())
+		stmt := fa.generateEnsuresCode(c.Ensures())
 		result = append(result, stmt)
 	}
 
@@ -360,13 +360,12 @@ func (fileAnalyzer) generateLetCode(let contract.Let) (r string) {
 // @requires fd != nil
 // @requires clauses != nil && len(clauses) > 0
 // @ensures r != ""
-func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.FuncDecl) (r string) {
+func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures) (r string) {
 	const templateOldVarDecl = commentPrefix + `%oldId% := %expr%`
 	const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("%contract% not satisfied") }`
 
 	ensuresCode := make([]string, len(clauses))
 	oldVarDecls := []string{}
-	//funcArgs := []string{}
 	for _, clause := range clauses {
 		shortStmt, expr, idToOld := clause.ExpandedExpression()
 		if shortStmt != "" {
@@ -389,27 +388,6 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures, fd *ast.F
 	r += strings.Replace(templateDeferredFunction, "%checks%", strings.Join(ensuresCode, "\n"), 1)
 
 	return r
-}
-
-// @requires fd != nil
-func (fa fileAnalyzer) getTypeForID(id string, fd *ast.FuncDecl) string {
-	for _, param := range fd.Type.Params.List {
-		fields := param.Names
-		found := false
-		for _, field := range fields {
-			name := field.Name
-			if id == name {
-				found = true
-				break
-			}
-		}
-
-		if found {
-			return fa.typeAsString(param.Type)
-		}
-	}
-
-	return "any"
 }
 
 // @requires n != nil
