@@ -6,8 +6,10 @@ const (
 )
 
 // BankAccount represents a bank account
-// @invariant [balance of open accounts is always at least the minBalance] (!BankAccount.closed) ==> BankAccount.balance >= minBalance
-// @invariant [balance of open accounts is always at most the maxBalance] (!BankAccount.closed) ==> BankAccount.balance <= maxBalance
+// @invariant [balance of open accounts is always at least the minBalance] /
+// !BankAccount.closed ==> BankAccount.balance >= minBalance
+// @invariant [balance of open accounts is always at most the maxBalance] /
+// !BankAccount.closed ==> BankAccount.balance <= maxBalance
 // @invariant [balance of closed accounts is 0] BankAccount.closed ==> BankAccount.balance == 0
 type BankAccount struct {
 	balance int  // the balance of the account

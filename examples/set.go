@@ -8,7 +8,8 @@ type Set struct {
 }
 
 // NewSet creates a new set
-// @ensures [set is created and empty] s.elements != nil && len(s.elements) == 0
+// @ensures [set is created and empty] /
+// s.elements != nil && len(s.elements) == 0
 func NewSet() (s *Set) {
 	return &Set{
 		elements: map[string]struct{}{},
@@ -17,16 +18,22 @@ func NewSet() (s *Set) {
 
 // Add inserts an element into the set
 // @ensures [element is present in the set] s.Contains(value)
-// @ensures [cardinality grows if new element] present := @old{s.Contains(value)}.(bool); present ==> @old{len(s.elements)} == len(s.elements) - 1
-// @ensures [cardinality remains the same if no new element] present := @old{s.Contains(value)}.(bool); !present ==> @old{len(s.elements)} == len(s.elements)
+// @let alreadyPresent := s.Contains(value)
+// @ensures [cardinality grows if new element] /
+// alreadyPresent ==> @old{len(s.elements)} == len(s.elements) - 1
+// @ensures [cardinality remains the same if no new element] /
+// alreadyPresent ==> @old{len(s.elements)} == len(s.elements)
 func (s *Set) Add(value string) {
 	s.elements[value] = struct{}{}
 }
 
 // Remove deletes an element from the set
 // @ensures [element is not present in the set] !s.Contains(value)
-// @ensures [cardinality shirks if element was in the set] present := @old{s.Contains(value)}.(bool); present ==> @old{len(s.elements)-1} == len(s.elements)
-// @ensures [cardinality remains the same if element was not in the set] present := @old{s.Contains(value)}.(bool); !present ==> @old{len(s.elements)} == len(s.elements)
+// @let alreadyPresent := s.Contains(value)
+// @ensures [cardinality shirks if element was in the set] /
+// alreadyPresent ==> @old{len(s.elements)-1} == len(s.elements)
+// @ensures [cardinality remains the same if element was not in the set] /
+// alreadyPresent ==> @old{len(s.elements)} == len(s.elements)
 func (s *Set) Remove(value string) {
 	delete(s.elements, value)
 }

@@ -192,12 +192,30 @@ func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
 		contractParser := contractParser.NewParser()
 		contract := contract.NewFuncContract(fd)
 		comments := fd.Doc.List
+		acc := ""
+		mustAcc := false
 		for _, commentLine := range comments {
-			err := contractParser.ParseFuncContract(contract, commentLine.Text)
+			line := strings.TrimLeft(commentLine.Text, "/")
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+			if strings.HasSuffix(line, "/") {
+				line = strings.TrimRight(line, "/") + " "
+				mustAcc = true
+			}
+			acc += line
+			if mustAcc {
+				mustAcc = false
+				continue
+			}
+			err := contractParser.ParseFuncContract(contract, acc)
 			if err != nil {
 				log.Printf("%s: Warning: %s", fa.positionAsString(commentLine.Pos()), err.Error())
 				continue
 			}
+
+			acc = ""
 		}
 
 		contractStmts, errs := fa.generateCode(contract)

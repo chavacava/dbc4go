@@ -21,7 +21,7 @@ func NewParser() Parser {
 	return Parser{}
 }
 
-var reContracts = regexp.MustCompile(`\s*//\s*@(?P<kind>[a-z]+)(?:[\t ]+(?P<description>\[[\w\s\d,]+\]))?[\t ]+(?P<expr>[^$]+)`)
+var reContracts = regexp.MustCompile(`\s*@(?P<kind>[a-z]+)(?:[\t ]+(?P<description>\[[\w\s\d,]+\]))?[\t ]+(?P<expr>[^$]+)`)
 
 // ParseTypeContract enrich the contract with the clause if present in the given comment line
 // @requires typeContract != nil
