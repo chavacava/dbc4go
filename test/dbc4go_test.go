@@ -1,7 +1,7 @@
 package test
 
 import (
-	"io/ioutil"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/chavacava/dbc4go/internal/contract/generator"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestDBC4GO(t *testing.T) {
@@ -18,24 +17,28 @@ func TestDBC4GO(t *testing.T) {
 		expOutput string // expected output
 	}{
 		{
-			input:     "./fixtures/1.input",
-			expOutput: "./fixtures/1.output",
+			input:     "./testdata/1.input",
+			expOutput: "./testdata/1.output",
 		},
 		{
-			input:     "./fixtures/2.input",
-			expOutput: "./fixtures/2.output",
+			input:     "./testdata/2.input",
+			expOutput: "./testdata/2.output",
 		},
 		{
-			input:     "./fixtures/3.input",
-			expOutput: "./fixtures/3.output",
+			input:     "./testdata/3.input",
+			expOutput: "./testdata/3.output",
 		},
 		{
-			input:     "./fixtures/4.input",
-			expOutput: "./fixtures/4.output",
+			input:     "./testdata/4.input",
+			expOutput: "./testdata/4.output",
+		},
+		{
+			input:     "./testdata/unmodified.input",
+			expOutput: "./testdata/unmodified.output",
 		},
 	}
 
-	tmpDir, err := ioutil.TempDir("", "testing-dbc4go")
+	tmpDir, err := os.MkdirTemp("", "testing-dbc4go")
 	if err != nil {
 		t.Fatalf("Unable to create temporary directory for tests: %v", err)
 	}
@@ -60,26 +63,34 @@ func TestDBC4GO(t *testing.T) {
 			t.Fatalf("Unable to generate code for test #%d: %v", i, err)
 		}
 
-		err = compareFiles(test.expOutput, outputFilename, t)
+		equal, err := areFilesEqual(test.expOutput, outputFilename)
 		if err != nil {
-			t.Fatalf("Unable to compare generated file with reference: %v", err)
+			t.Fatalf("Error when comparing generated file with reference: %v", err)
 		}
+
+		if !equal {
+			t.Fatalf("Files %q and %q are not equal", test.expOutput, outputFilename)
+		}
+
 		input.Close()
 	}
 }
 
-func compareFiles(f1, f2 string, t *testing.T) error {
-	content1, err := ioutil.ReadFile(f1)
+func areFilesEqual(f1, f2 string) (bool, error) {
+	content1, err := os.ReadFile(f1)
 	if err != nil {
-		return err
+		return false, fmt.Errorf("error opening file %q: %w", f1, err)
 	}
 
-	content2, err := ioutil.ReadFile(f2)
+	content2, err := os.ReadFile(f2)
 	if err != nil {
-		return err
+		return false, fmt.Errorf("error opening file %q: %w", f2, err)
 	}
 
-	assert.Equal(t, content1, content2)
+	if string(content1) != string(content2) {
+		fmt.Printf("\n%s", string(content2))
+		return false, nil
+	}
 
-	return nil
+	return true, nil
 }

@@ -1,4 +1,4 @@
-//go:generate dbc4go -i $GOFILE -o $GOFILE
+// Package main provides the dbc4go command line application
 package main
 
 import (
@@ -27,9 +27,10 @@ func main() {
 		if err != nil {
 			log.Fatalf("Unable to open input file: %v", err)
 		}
+		defer input.Close()
 	}
-	output := os.Stdout
 
+	output := os.Stdout
 	if outputFilename != "" {
 		if outputFilename == inputFilename {
 			r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -55,7 +56,6 @@ func main() {
 	}
 
 	err := generator.GenerateCode(input, output)
-	input.Close()
 	if err != nil {
 		log.Fatalf("Unable to generate code: %v", err)
 	}

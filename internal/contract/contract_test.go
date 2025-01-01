@@ -12,11 +12,11 @@ func TestConstructor(t *testing.T) {
 	fd := &ast.FuncDecl{}
 	tests := []struct {
 		target *ast.FuncDecl
-		result FuncContract
+		result *FuncContract
 	}{
 		{
 			target: fd,
-			result: FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: fd, imports: map[string]struct{}{}},
+			result: &FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: fd, imports: map[string]struct{}{}},
 		},
 	}
 
@@ -28,8 +28,8 @@ func TestConstructor(t *testing.T) {
 }
 
 func TestAddRequires(t *testing.T) {
-	sampleReq1 := NewRequires("1")
-	sampleReq2 := NewRequires("2")
+	sampleReq1 := NewRequires("1", "")
+	sampleReq2 := NewRequires("2", "")
 	tests := []struct {
 		requires         Requires
 		expectedRequires []Requires
@@ -66,8 +66,8 @@ func TestTarget(t *testing.T) {
 }
 
 func TestRequires(t *testing.T) {
-	sampleReq1 := NewRequires("1")
-	sampleReq2 := NewRequires("2")
+	sampleReq1 := NewRequires("1", "")
+	sampleReq2 := NewRequires("2", "")
 	tests := []struct {
 		requires []Requires
 	}{
@@ -92,8 +92,8 @@ func TestRequires(t *testing.T) {
 }
 
 func TestAddEnsures(t *testing.T) {
-	sampleEns1 := NewEnsures("1")
-	sampleEns2 := NewEnsures("2")
+	sampleEns1 := NewEnsures("1", "")
+	sampleEns2 := NewEnsures("2", "")
 	tests := []struct {
 		ensures         Ensures
 		expectedEnsures []Ensures
@@ -122,8 +122,8 @@ func TestAddEnsures(t *testing.T) {
 }
 
 func TestEnsures(t *testing.T) {
-	sampleEns1 := NewEnsures("1")
-	sampleEns2 := NewEnsures("2")
+	sampleEns1 := NewEnsures("1", "")
+	sampleEns2 := NewEnsures("2", "")
 	tests := []struct {
 		ensures []Ensures
 	}{
@@ -244,18 +244,15 @@ func TestEnsuresExpandedExpr(t *testing.T) {
 			expandedExpr: "!(a == b) || (b == c)",
 		},
 		{
-			expr:         "a == b ==> b == @old(c)",
-			expandedExpr: "!(a == b) || (b == old_c)",
-		},
-		{
-			expr:         "@old(a) == @old(b) ==> @old(b) == @old(c)",
-			expandedExpr: "!(old_a == old_b) || (old_b == old_c)",
+			expr:         "a == b ==> b == @old{c}",
+			expandedExpr: "!(a == b) || (b == old_1)",
 		},
 	}
 
 	for _, tc := range tests {
 		e := Ensures{expr: tc.expr}
-		assert.Equal(t, tc.expandedExpr, e.ExpandedExpression())
+		_, got, _ := e.ExpandedExpression()
+		assert.Equal(t, tc.expandedExpr, got)
 	}
 }
 

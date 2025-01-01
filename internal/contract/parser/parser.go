@@ -4,7 +4,9 @@ package parser
 //go:generate dbc4go -i $GOFILE -o $GOFILE
 
 import (
+	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/chavacava/dbc4go/internal/contract"
 	"github.com/pkg/errors"
@@ -19,42 +21,44 @@ func NewParser() Parser {
 	return Parser{}
 }
 
-var reContracts = regexp.MustCompile("//@(?P<kind>[a-z]+)[\t ]+(?P<expr>[^$]+)")
+var reContracts = regexp.MustCompile(`\s*@(?P<kind>[a-z]+)(?:[\t ]+(?P<description>\[[\w\s\d,]+\]))?[\t ]+(?P<expr>[^$]+)`)
 
-// Parse enrich the Contract with the clause if present in the given comment line
-//@requires contract != nil
-func (p Parser) Parse(contract *contract.FuncContract, line string) error {
-	r2 := reContracts.FindAllStringSubmatch(line, -1)
-
-	if r2 == nil {
+// ParseTypeContract enrich the contract with the clause if present in the given comment line
+// @requires typeContract != nil
+func (p Parser) ParseTypeContract(typeContract *contract.TypeContract, line string) error {
+	kind, description, expr, matched := parseLine(line)
+	if !matched {
 		return nil // nothing to do, there is no contract in this comment line
 	}
 
-	kind := r2[0][1]
-	expr := r2[0][2]
-
 	switch kind {
-	case "requires":
-		clause, err := p.parseRequires(expr)
-		if err != nil {
-			return errors.Wrap(err, "invalid @requires clause")
+	case "invariant":
+		if contract.Re4old.MatchString(expr) {
+			return fmt.Errorf("@old can not be used in @invariant expressions: %s", expr)
 		}
 
-		contract.AddRequires(clause)
-	case "ensures":
-		clause, err := p.parseEnsures(expr)
+		ensuresClause, err := p.parseEnsures(expr, description) // invariants are ensures that apply to all methods of the type
 		if err != nil {
-			return errors.Wrap(err, "invalid @ensures clause")
+			return fmt.Errorf("invalid @invariant clause: %w", err)
 		}
 
-		contract.AddEnsures(clause)
+		typeContract.AddEnsures(ensuresClause)
+
+		requiresClause, err := p.parseRequires(expr, description) // invariants are, also, requires that apply to all methods of the type
+		if err != nil {
+			return fmt.Errorf("invalid @invariant clause: %w", err)
+		}
+
+		typeContract.AddRequires(requiresClause)
 	case "import":
 		clause, err := p.parseImport(expr)
 		if err != nil {
-			return errors.Wrap(err, "invalid @import clause")
+			return fmt.Errorf("invalid @import clause: %w", err)
 		}
 
-		contract.AddImport(clause)
+		typeContract.AddImport(clause)
+	case "ensures", "requires", "unmodified":
+		return fmt.Errorf("@%s can not be used in type contracts: %s", kind, expr)
 	default:
 		return errors.Errorf("unknown contract kind %s", kind)
 	}
@@ -62,17 +66,122 @@ func (p Parser) Parse(contract *contract.FuncContract, line string) error {
 	return nil
 }
 
-//@requires path != ""
-func (p Parser) parseImport(path string) (string, error) {
+// ParseFuncContract enrich the Contract with the clause if present in the given comment line
+// @requires funcContract != nil
+func (p Parser) ParseFuncContract(funcContract *contract.FuncContract, line string) error {
+	kind, description, expr, matched := parseLine(line)
+	if !matched {
+		return nil // nothing to do, there is no contract in this comment line
+	}
+
+	switch kind {
+	case "requires":
+		if contract.Re4old.MatchString(expr) {
+			return fmt.Errorf("@old can not be used in @requires expressions: %s", expr)
+		}
+
+		clause, err := p.parseRequires(expr, description)
+		if err != nil {
+			return fmt.Errorf("invalid @requires clause: %w", err)
+		}
+
+		funcContract.AddRequires(clause)
+	case "ensures":
+		clause, err := p.parseEnsures(expr, description)
+		if err != nil {
+			return fmt.Errorf("invalid @ensures clause: %w", err)
+		}
+
+		funcContract.AddEnsures(clause)
+	case "import":
+		clause, err := p.parseImport(expr)
+		if err != nil {
+			return fmt.Errorf("invalid @import clause: %w", err)
+		}
+
+		funcContract.AddImport(clause)
+	case "let":
+		if contract.Re4old.MatchString(expr) {
+			return fmt.Errorf("@old can not be used in @let expressions: %s", expr)
+		}
+
+		clause, err := p.parseLet(expr, description)
+		if err != nil {
+			return fmt.Errorf("invalid @let clause: %w", err)
+		}
+
+		funcContract.AddLet(clause)
+	case "unmodified":
+		clauses, err := p.parseUnmodified(expr)
+		if err != nil {
+			return fmt.Errorf("invalid @import clause: %w", err)
+		}
+
+		for _, clause := range clauses {
+			funcContract.AddEnsures(clause)
+		}
+	default:
+		return errors.Errorf("unknown contract kind %s", kind)
+	}
+
+	return nil
+}
+
+// @requires expr != ""
+func (p Parser) parseLet(expr string, description string) (r contract.Let, err error) {
+	return contract.NewLet(expr, description), nil
+}
+
+// @requires path != ""
+// @ensures r == "" ==> err != nil
+func (p Parser) parseImport(path string) (r string, err error) {
 	return path, nil
 }
 
-//@requires expr != ""
-func (p Parser) parseRequires(expr string) (contract.Requires, error) {
-	return contract.NewRequires(expr), nil
+// @requires expr != ""
+// @ensures r == contract.Requires{} ==> err != nil
+func (Parser) parseRequires(expr, description string) (r contract.Requires, err error) {
+	return contract.NewRequires(expr, description), nil
 }
 
-//@requires expr != ""
-func (p Parser) parseEnsures(expr string) (contract.Ensures, error) {
-	return contract.NewEnsures(expr), nil
+// @requires expr != ""
+// @ensures r == contract.Ensures{} ==> err != nil
+func (Parser) parseEnsures(expr, description string) (r contract.Ensures, err error) {
+	return contract.NewEnsures(expr, description), nil
+}
+
+// @ensures r != nil
+// @ensures err == nil
+func (p Parser) parseUnmodified(expr string) (r []contract.Ensures, err error) {
+	result := []contract.Ensures{}
+
+	ids := strings.Split(expr, ",")
+	for _, id := range ids {
+		id := strings.TrimSpace(id)
+		expr := fmt.Sprintf("@old{%s} == %s", id, id)
+		description := fmt.Sprintf("[%s unmodified]", id)
+		newEnsure := contract.NewEnsures(expr, description)
+		result = append(result, newEnsure)
+	}
+
+	return result, nil
+}
+
+// parseLine extracts kind, description and expr from a given comment line
+// If the line is a contract annotation it returns matched true, false otherwise.
+func parseLine(line string) (kind, description, expr string, matched bool) {
+	r2 := reContracts.FindAllStringSubmatch(line, -1)
+	if r2 == nil {
+		return kind, description, expr, false
+	}
+
+	kind = r2[0][1]
+	expr = r2[0][2]
+	description = ""
+	if len(r2[0]) == 4 {
+		description = expr
+		expr = r2[0][3]
+	}
+
+	return kind, description, expr, true
 }

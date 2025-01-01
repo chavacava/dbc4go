@@ -1,0 +1,14 @@
+[] add type info to solve type-mismatch errors
+[] add actual expression values in panic messages
+[] use templates to generate code
+[] add @forall
+[] add @exists
+[] provide mean to define the panic message, something like
+// Credit the given amount to the account
+// @requires [can not credit a closed account] !a.closed
+// ...
+func (a *BankAccount) Credit(amount int) {
+	// ... implementation ...
+}
+
+

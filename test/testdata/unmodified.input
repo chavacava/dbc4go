@@ -1,0 +1,12 @@
+package foo
+
+var x int
+
+type S struct {
+    a string
+}
+
+// @unmodified x, s.a 
+func (s S) unmodified(a int, b int) (r int) {
+    return a
+} 
