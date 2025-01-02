@@ -190,6 +190,7 @@ func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
 	dstFuncDecl := fa.decorator.Dst.Nodes[fd].(*dst.FuncDecl)
 
 	contractScope := []string{commentPrefix + "{ // Open contract scope "}
+
 	defer func() {
 		codeWasGenerated := len(contractScope) > 1
 		if codeWasGenerated {
@@ -211,7 +212,7 @@ func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
 }
 
 // @requires fd != nil
-// @ensures fd.Doc == nil ==> len(result) == 0 && len(errs) == 0
+// %ensures fd.Doc == nil ==> len(result) == 0 && len(errs) == 0
 func (fa fileAnalyzer) getCodeForContracts(fd *ast.FuncDecl) (result []string, errs []error) {
 	if fd.Doc == nil {
 		return // the function has not attached documentation
@@ -297,11 +298,11 @@ func (fa fileAnalyzer) getReceiverTypeName(receiver *ast.FieldList) string {
 // It also yields the list of errors that occurred while the generation.
 //
 // @requires contract != nil
-// @unmodified len(contract.Requires())
-// @unmodified len(contract.Ensures())
-// @unmodified len(contract.Lets())
-// @unmodified len(contract.Imports())
-// @unmodified len(contract.Target())
+// %unmodified len(contract.Requires())
+// %unmodified len(contract.Ensures())
+// %unmodified len(contract.Lets())
+// %unmodified len(contract.Imports())
+// %unmodified len(contract.Target())
 func (fa fileAnalyzer) generateCode(contract *contract.FuncContract) (stmts []string, errs []error) {
 	result := []string{}
 	errs = []error{}
@@ -332,8 +333,8 @@ func (fa fileAnalyzer) generateCode(contract *contract.FuncContract) (stmts []st
 const commentPrefix = "//dbc4go "
 
 // @requires c != nil
-// @ensures len(c.Ensures()) == 0 ==> stmts == nil
-// @ensures len(c.Ensures()) != 0 ==> stmts != nil
+// %ensures len(c.Ensures()) == 0 ==> stmts == nil
+// %ensures len(c.Ensures()) != 0 ==> stmts != nil
 func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []string) {
 	result := []string{}
 
@@ -427,7 +428,7 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures) (r string
 }
 
 // @requires n != nil
-// @ensures r != ""
+// %ensures r != ""
 func (fa fileAnalyzer) typeAsString(n ast.Node) (r string) {
 	buf := bytes.Buffer{}
 	fs := token.NewFileSet()
@@ -435,7 +436,7 @@ func (fa fileAnalyzer) typeAsString(n ast.Node) (r string) {
 	return buf.String()
 }
 
-// @ensures len(str)<=len(r)
+// %ensures len(str)<=len(r)
 func escapeDoubleQuotes(str string) (r string) {
 	return strings.Replace(str, "\"", "\\\"", -1)
 }
