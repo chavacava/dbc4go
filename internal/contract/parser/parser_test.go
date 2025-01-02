@@ -83,6 +83,29 @@ func TestParseEnsures(t *testing.T) {
 	}
 }
 
+func TestParseLet(t *testing.T) {
+	tests := []struct {
+		expr     string
+		expected contract.Let
+		err      bool
+	}{
+		{
+			expr:     "a := b",
+			expected: contract.NewLet("a := b", ""),
+			err:      false,
+		},
+	}
+
+	p := NewParser()
+	for _, tc := range tests {
+		r, err := p.parseLet(tc.expr, "")
+		assert.Equal(t, r, tc.expected)
+		if tc.err {
+			assert.NotEqual(t, err, nil)
+		}
+	}
+}
+
 func TestParse(t *testing.T) {
 	c := contract.NewFuncContract(&ast.FuncDecl{})
 	tests := []struct {
