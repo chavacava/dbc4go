@@ -336,8 +336,8 @@ func (fa fileAnalyzer) generateCode(contract *contract.FuncContract) (stmts []st
 const commentPrefix = "//dbc4go "
 
 // @requires c != nil
-// @ensures len(c.Ensures()) == 0 ==> stmts == nil
-// @ensures len(c.Ensures()) != 0 ==> stmts != nil
+// @ensures len(c.Ensures()) == 0 ==> len(stmts) == 0
+// @ensures len(c.Ensures()) != 0 ==> len(stmts) > 0
 func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []string) {
 	result := []string{}
 
