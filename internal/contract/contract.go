@@ -1,7 +1,7 @@
 // Package contract provides contract related objects
 package contract
 
-//go:generate dbc4go -i $GOFILE -o $GOFILE
+// disabled until support for generics go:generate dbc4go -i $GOFILE -o $GOFILE
 
 import (
 	"fmt"
