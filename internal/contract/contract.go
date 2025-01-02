@@ -256,6 +256,14 @@ func NewEnsures(expr, description string) (r Ensures) {
 	return Ensures{expr: expr, description: description}
 }
 
+func (r Ensures) Expression() (expr string) {
+	return r.expr
+}
+
+func (r Ensures) Description() (description string) {
+	return r.description
+}
+
 // ExpandedExpression yields the expanded ensures' expression.
 //
 // @ensures expr != ""
