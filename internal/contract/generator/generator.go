@@ -270,13 +270,13 @@ func (fa fileAnalyzer) generateCode(c *contract.FuncContract) (stmts []string, e
 	result := []string{}
 	errs = []error{}
 
-	for _, let := range c.Lets() {
-		stmt := fa.generateLetCode(let)
+	for _, r := range c.Requires() {
+		stmt := fa.generateRequiresCode(r, "")
 		result = append(result, stmt)
 	}
 
-	for _, r := range c.Requires() {
-		stmt := fa.generateRequiresCode(r, "")
+	for _, let := range c.Lets() {
+		stmt := fa.generateLetCode(let)
 		result = append(result, stmt)
 	}
 
