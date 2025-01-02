@@ -2,7 +2,8 @@ package examples
 
 // This is an example on how to enforce the use of a struct constructor
 
-// MyObject is a dummy struct
+// MyObject is a dummy struct.
+//
 // @invariant MyObject.usedConstructor == true
 type MyObject struct {
 
@@ -11,7 +12,8 @@ type MyObject struct {
 	usedConstructor bool // created with the constructor?
 }
 
-// New creates a new MyObject with the given parameters
+// New creates a new MyObject with the given parameters.
+//
 // @ensures result.usedConstructor == true
 func New( /* parameters */ ) (result MyObject) {
 	return MyObject{

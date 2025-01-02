@@ -2,12 +2,15 @@ package examples
 
 // Borrowed from https://www.bytesizego.com/blog/set-in-golang
 
-// Set is a collection of unique elements
+// Set is a collection of unique elements.
+//
+// @invariant Set.elements != nil
 type Set struct {
 	elements map[string]struct{}
 }
 
-// NewSet creates a new set
+// NewSet creates a new set.
+//
 // @ensures [set is created and empty] /
 // s.elements != nil && len(s.elements) == 0
 func NewSet() (s *Set) {
@@ -16,7 +19,8 @@ func NewSet() (s *Set) {
 	}
 }
 
-// Add inserts an element into the set
+// Add inserts an element into the set.
+//
 // @ensures [element is present in the set] s.Contains(value)
 // @let alreadyPresent := s.Contains(value)
 // @ensures [cardinality grows if new element] /
@@ -27,7 +31,8 @@ func (s *Set) Add(value string) {
 	s.elements[value] = struct{}{}
 }
 
-// Remove deletes an element from the set
+// Remove deletes an element from the set.
+//
 // @ensures [element is not present in the set] !s.Contains(value)
 // @let alreadyPresent := s.Contains(value)
 // @ensures [cardinality shirks if element was in the set] /
@@ -38,7 +43,8 @@ func (s *Set) Remove(value string) {
 	delete(s.elements, value)
 }
 
-// Contains checks if an element is in the set
+// Contains checks if an element is in the set.
+//
 // @ensures _, ok := s.elements[value]; ok ==> result == true
 // @ensures _, ok := s.elements[value]; !ok ==> result != true
 // @unmodified len(s.elements)
@@ -47,14 +53,16 @@ func (s *Set) Contains(value string) (result bool) {
 	return found
 }
 
-// Size returns the number of elements in the set
+// Size returns the number of elements in the set.
+//
 // @ensures result == @old{len(s.elements)}
 // @unmodified len(s.elements)
 func (s *Set) Size() (result int) {
 	return len(s.elements)
 }
 
-// List returns all elements in the set as a slice
+// List returns all elements in the set as a slice.
+//
 // @ensures len(result) == @old{len(s.elements)}
 // @unmodified len(s.elements)
 func (s *Set) List() (result []string) {

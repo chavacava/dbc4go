@@ -12,6 +12,7 @@ import (
 )
 
 // BitBuffer represents a buffer, which is filled with bytes where each bit can be read as a single unit.
+//
 // @invariant BitBuffer.pos >= 0
 // @invariant len(BitBuffer.buffer) == 0 ==> BitBuffer.pos == 0
 // @invariant len(BitBuffer.buffer) >= 1 ==> int(BitBuffer.pos) < len(BitBuffer.buffer) * 8
@@ -29,6 +30,7 @@ func (err TooManyBitsError) Error() string {
 }
 
 // NewBitBuffer constructs a new BitBuffer.
+//
 // @ensures bitBuffer != nil
 // @ensures bitBuffer.pos == 0
 // @ensures bitBuffer.ByteOrder == byteOrder
@@ -40,6 +42,7 @@ func NewBitBuffer(byteOrder binary.ByteOrder) (bitBuffer *BitBuffer) {
 }
 
 // Feed data bytes into the buffer.
+//
 // @let initialBufferLen := len(bitBuffer.buffer)
 // @ensures [buffer grows according to data size] len(bitBuffer.buffer) == initialBufferLen + len(data)
 // @unmodified bitBuffer.pos
@@ -48,6 +51,7 @@ func (bitBuffer *BitBuffer) Feed(data []byte) {
 }
 
 // Clear buffer.
+//
 // @ensures len(bitBuffer.buffer) == 0
 // @ensures bitBuffer.pos == 0
 func (bitBuffer *BitBuffer) Clear() {
@@ -56,6 +60,7 @@ func (bitBuffer *BitBuffer) Clear() {
 }
 
 // Read a number of bits from the buffer and return them as a byte array.
+//
 // @let requiredBits := numBits
 // @let initialRemainingBits := bitBuffer.remainingBits()
 // @ensures [errs if not enough remaining bits] /
@@ -66,6 +71,7 @@ func (bitBuffer *BitBuffer) Clear() {
 // err == nil ==> len(data) == requiredBytes
 // @ensures [if err the returned data size is smaller than the required data size] /
 // err != nil ==> len(data) < requiredBytes
+//
 // Contract on the final buffer position
 // @let initialPos := bitBuffer.pos
 // @ensures err == nil ==> uint64(bitBuffer.pos) == uint64(initialPos) + requiredBits
