@@ -130,8 +130,8 @@ func (p Parser) ParseFuncContract(funcContract *contract.FuncContract, line stri
 }
 
 // @requires expr != ""
-// @ensures err != nil ==> r.expr == expr
-// @ensures err != nil ==> r.description == description
+// @ensures err != nil ==> r.Expression() == expr
+// @ensures err != nil ==> r.Description() == description
 func (p Parser) parseLet(expr string, description string) (r contract.Let, err error) {
 	return contract.NewLet(expr, description), nil
 }
@@ -143,15 +143,15 @@ func (p Parser) parseImport(path string) (r string, err error) {
 }
 
 // @requires expr != ""
-// @ensures err != nil ==> r.expr == expr
-// @ensures err != nil ==> r.description == description
+// @ensures err != nil ==> r.Expression() == expr
+// @ensures err != nil ==> r.Description() == description
 func (Parser) parseRequires(expr, description string) (r contract.Requires, err error) {
 	return contract.NewRequires(expr, description), nil
 }
 
 // @requires expr != ""
-// @ensures err != nil ==> r.expr == expr
-// @ensures err != nil ==> r.description == description
+// @ensures err != nil ==> r.Expression() == expr
+// @ensures err != nil ==> r.Description() == description
 func (Parser) parseEnsures(expr, description string) (r contract.Ensures, err error) {
 	return contract.NewEnsures(expr, description), nil
 }

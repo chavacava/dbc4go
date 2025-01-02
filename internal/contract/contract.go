@@ -201,6 +201,11 @@ func NewLet(expr, description string) Let {
 	return Let{expr: expr, description: description}
 }
 
+// Expression yields the let expression
+func (l Let) Expression() string {
+	return l.expr
+}
+
 // ExpandedExpression yields the expanded let expression
 func (l Let) ExpandedExpression() string {
 	return l.expr
@@ -222,6 +227,14 @@ type Requires struct {
 // @requires expr != ""
 func NewRequires(expr, description string) Requires {
 	return Requires{expr: expr, description: description}
+}
+
+func (r Requires) Expression() (expr string) {
+	return r.expr
+}
+
+func (r Requires) Description() (description string) {
+	return r.description
 }
 
 // ExpandedExpression yields the expanded requires' expression.
