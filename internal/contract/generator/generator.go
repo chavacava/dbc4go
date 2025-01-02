@@ -188,58 +188,73 @@ func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
 		}
 	}()
 
-	if fd.Doc != nil {
-		contractParser := contractParser.NewParser()
-		contract := contract.NewFuncContract(fd)
-		comments := fd.Doc.List
-		acc := ""
-		mustAcc := false
-		for _, commentLine := range comments {
-			line := strings.TrimLeft(commentLine.Text, "/")
-			line = strings.TrimSpace(line)
-			if line == "" {
-				continue
-			}
-			if strings.HasSuffix(line, "/") {
-				line = strings.TrimRight(line, "/") + " "
-				mustAcc = true
-			}
-			acc += line
-			if mustAcc {
-				mustAcc = false
-				continue
-			}
-			err := contractParser.ParseFuncContract(contract, acc)
-			if err != nil {
-				log.Printf("%s: Warning: %s", fa.positionAsString(commentLine.Pos()), err.Error())
-				continue
-			}
+	// Add code for enforce invariants if any
+	contractScope = append(contractScope, fa.getCodeForInvariants(fd)...)
 
-			acc = ""
-		}
-
-		contractStmts, errs := fa.generateCode(contract)
-		for _, err := range errs {
-			log.Printf("Warning: %v", err)
-		}
-
-		contractScope = append(contractScope, contractStmts...)
+	// Add code for function contracts if any
+	contractStmts, errs := fa.getCodeForContracts(fd)
+	for _, err := range errs {
+		log.Printf("Warning: %v", err)
 	}
 
-	// Also add code for enforce invariants if available
+	contractScope = append(contractScope, contractStmts...)
+}
+
+func (fa fileAnalyzer) getCodeForContracts(fd *ast.FuncDecl) (result []string, errs []error) {
+	if fd.Doc == nil {
+		return // the function has not attached documentation
+	}
+
+	contractParser := contractParser.NewParser()
+	contract := contract.NewFuncContract(fd)
+	comments := fd.Doc.List
+	acc := ""
+	mustAcc := false
+	for _, commentLine := range comments {
+		line := strings.TrimLeft(commentLine.Text, "/")
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		if strings.HasSuffix(line, "/") {
+			line = strings.TrimRight(line, "/") + " "
+			mustAcc = true
+		}
+		acc += line
+		if mustAcc {
+			mustAcc = false
+			continue
+		}
+		err := contractParser.ParseFuncContract(contract, acc)
+		if err != nil {
+			log.Printf("%s: Warning: %s", fa.positionAsString(commentLine.Pos()), err.Error())
+			continue
+		}
+
+		acc = ""
+	}
+
+	result, errs = fa.generateCode(contract)
+	resultWithComment := []string{commentPrefix + "// Function's contracts"}
+
+	return append(resultWithComment, result...), errs
+}
+
+func (fa fileAnalyzer) getCodeForInvariants(fd *ast.FuncDecl) (result []string) {
 	if fd.Recv == nil || len(fd.Recv.List) < 1 {
-		return // not a method thus no invariants
+		return result
 	}
 
 	receiverType := fa.getReceiverTypeName(fd.Recv)
 	invariantCode, ok := fa.typeInvariantsCode[receiverType]
-	if !ok || invariantCode == nil {
-		return // did not found invariant code associated to this method's receiver
+	if !ok || len(invariantCode) == 0 {
+		return result
 	}
-	if len(fd.Recv.List[0].Names) < 1 || fd.Recv.List[0].Names[0].Name == "_" {
-		// anonymous receiver
+
+	isAnonymousReceiver := len(fd.Recv.List[0].Names) < 1 || fd.Recv.List[0].Names[0].Name == "_"
+	if isAnonymousReceiver {
 		log.Printf("Warning: can not enforce invariants on method %s because it has an anonymous receiver", fd.Name.Name)
-		return
+		return result
 		// TODO: insert a receiver name to enable checks
 	}
 
@@ -248,7 +263,11 @@ func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
 	for i, code := range invariantCode {
 		invariantCodeForMethod[i] = strings.ReplaceAll(code, receiverType+".", receiverName+".")
 	}
-	contractScope = append(contractScope, invariantCodeForMethod...)
+
+	result = []string{commentPrefix + "// Type invariants "}
+	result = append(result, invariantCodeForMethod...)
+
+	return result
 }
 
 func (fa fileAnalyzer) getReceiverTypeName(receiver *ast.FieldList) string {
