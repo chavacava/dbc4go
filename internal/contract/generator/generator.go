@@ -215,7 +215,7 @@ func (fa *fileAnalyzer) rewriteFuncDecl(fd *ast.FuncDecl) {
 // @ensures fd.Doc == nil ==> len(result) == 0 && len(errs) == 0
 func (fa fileAnalyzer) getCodeForContracts(fd *ast.FuncDecl) (result []string, errs []error) {
 	if fd.Doc == nil {
-		return // the function has not attached documentation
+		return result, errs // the function has not attached documentation
 	}
 
 	contractParser := contractParser.NewParser()
@@ -409,8 +409,8 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures) (r string
 		if shortStmt != "" {
 			shortStmt = shortStmt + "; "
 		}
-		for expr, oldId := range idToOld {
-			decl := strings.Replace(templateOldVarDecl, "%oldId%", oldId, 1)
+		for expr, oldID := range idToOld {
+			decl := strings.Replace(templateOldVarDecl, "%oldId%", oldID, 1)
 			decl = strings.Replace(decl, "%expr%", expr, 1)
 			oldVarDecls = append(oldVarDecls, decl)
 		}

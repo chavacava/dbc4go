@@ -184,12 +184,13 @@ func (c *FuncContract) AddLet(l Let) {
 	c.lets = append(c.lets, l)
 }
 
-// Requires yields requires clauses of this contract
+// Lets yields lets clauses of this contract.
 // @ensures len(r) == len(c.lets)
 func (c *FuncContract) Lets() (r []Let) {
 	return c.lets
 }
 
+// Let models a @Let clause.
 type Let struct {
 	expr        string
 	description string
@@ -229,10 +230,12 @@ func NewRequires(expr, description string) Requires {
 	return Requires{expr: expr, description: description}
 }
 
+// Expression yields the expression of this Requires.
 func (r Requires) Expression() (expr string) {
 	return r.expr
 }
 
+// Description yields the description of this Requires.
 func (r Requires) Description() (description string) {
 	return r.description
 }
@@ -269,10 +272,12 @@ func NewEnsures(expr, description string) (r Ensures) {
 	return Ensures{expr: expr, description: description}
 }
 
+// Expression yields the expression of this Ensures.
 func (r Ensures) Expression() (expr string) {
 	return r.expr
 }
 
+// Description yields the description of this Ensures.
 func (r Ensures) Description() (description string) {
 	return r.description
 }
@@ -281,7 +286,7 @@ func (r Ensures) Description() (description string) {
 //
 // @ensures expr != ""
 // @ensures idToOldIdMap != nil
-func (r Ensures) ExpandedExpression() (shortStmt, expr string, idToOldIdMap map[string]string) {
+func (r Ensures) ExpandedExpression() (shortStmt, expr string, idToOldIDMap map[string]string) {
 	expr = r.expr
 	shortStmt = ""
 	if strings.Contains(r.expr, ";") {
@@ -294,13 +299,14 @@ func (r Ensures) ExpandedExpression() (shortStmt, expr string, idToOldIdMap map[
 	shortStmt, shortStmtMappings := expandOldExpressions(shortStmt)
 	// replace @old{id.otherId} by old_<number> in expression
 	expr, exprMappings := expandOldExpressions(expr)
-	idToOldIdMap = map[string]string{}
-	maps.Copy[map[string]string, map[string]string](idToOldIdMap, shortStmtMappings)
-	maps.Copy[map[string]string, map[string]string](idToOldIdMap, exprMappings)
+	idToOldIDMap = map[string]string{}
+	maps.Copy[map[string]string, map[string]string](idToOldIDMap, shortStmtMappings)
+	maps.Copy[map[string]string, map[string]string](idToOldIDMap, exprMappings)
 
-	return shortStmt, expr, idToOldIdMap
+	return shortStmt, expr, idToOldIDMap
 }
 
+// Re4old is a regular expression for @old expressions.
 var Re4old = regexp.MustCompile(`@old\{(.+)\}`)
 
 // Replace @old{<expression>} by old_<number> in the given string.
