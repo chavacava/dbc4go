@@ -34,7 +34,8 @@ func NewParser() Parser {
 
 // ParseTypeContract enrich the contract with the clause if present in the given comment line.
 //
-// @requires typeContract != nil
+// Contract:
+//   - requires typeContract != nil
 func (p *Parser) ParseTypeContract(typeContract *contract.TypeContract, line string) error {
 	kind, description, expr, matched := p.parseLine(line)
 	if !matched {
@@ -78,7 +79,8 @@ func (p *Parser) ParseTypeContract(typeContract *contract.TypeContract, line str
 
 // ParseFuncContract enrich the Contract with the clause if present in the given comment line.
 //
-// @requires funcContract != nil
+// Contract:
+//   - requires funcContract != nil
 func (p *Parser) ParseFuncContract(funcContract *contract.FuncContract, line string) error {
 	kind, description, expr, matched := p.parseLine(line)
 	if !matched {
@@ -138,35 +140,40 @@ func (p *Parser) ParseFuncContract(funcContract *contract.FuncContract, line str
 	return nil
 }
 
-// @requires expr != ""
-// @ensures err != nil ==> r.Expression() == expr
-// @ensures err != nil ==> r.Description() == description
+// Contract:
+//   - requires expr != ""
+//   - ensures err != nil ==> r.Expression() == expr
+//   - ensures err != nil ==> r.Description() == description
 func (p *Parser) parseLet(expr string, description string) (r contract.Let, err error) {
 	return contract.NewLet(expr, description), nil
 }
 
-// @requires path != ""
-// @ensures r == "" ==> err != nil
+// Contract:
+//   - requires path != ""
+//   - ensures r == "" ==> err != nil
 func (p *Parser) parseImport(path string) (r string, err error) {
 	return path, nil
 }
 
-// @requires expr != ""
-// @ensures err != nil ==> r.Expression() == expr
-// @ensures err != nil ==> r.Description() == description
+// Contract:
+//   - requires expr != ""
+//   - ensures err != nil ==> r.Expression() == expr
+//   - ensures err != nil ==> r.Description() == description
 func (*Parser) parseRequires(expr, description string) (r contract.Requires, err error) {
 	return contract.NewRequires(expr, description), nil
 }
 
-// @requires expr != ""
-// @ensures err != nil ==> r.Expression() == expr
-// @ensures err != nil ==> r.Description() == description
+// Contract:
+//   - requires expr != ""
+//   - ensures err != nil ==> r.Expression() == expr
+//   - ensures err != nil ==> r.Description() == description
 func (*Parser) parseEnsures(expr, description string) (r contract.Ensures, err error) {
 	return contract.NewEnsures(expr, description), nil
 }
 
-// @ensures r != nil
-// @ensures err == nil
+// Contract:
+//   - ensures r != nil
+//   - ensures err == nil
 func (p *Parser) parseUnmodified(expr string) (r []contract.Ensures, err error) {
 	result := []contract.Ensures{}
 
@@ -188,8 +195,10 @@ var reStandardFormatContractBlockStarter = regexp.MustCompile(`\s*Contract:\s*$`
 
 // parseLine extracts kind, description and expr from a given comment line
 // If the line is a contract annotation it returns matched true, false otherwise.
-// @ensures matched ==> kind != ""
-// @ensures matched ==> expr != ""
+//
+// Contract:
+//   - ensures matched ==> kind != ""
+//   - ensures matched ==> expr != ""
 func (p *Parser) parseLine(line string) (kind, description, expr string, matched bool) {
 	if p.currentContractStyle == contractStyleUnknown {
 		r2 := reStandardFormatContractBlockStarter.FindAllStringSubmatch(line, -1)
