@@ -54,7 +54,8 @@ Example:
 ```go
 const maxAuthorizedSpeed = 350
 
-// NewCar returns a Car struct
+// NewCar returns a Car struct.
+//
 // @requires wheels > 2
 // @requires wheelsDrive <= wheels && wheelsDrive >= 2 && wheelsDrive%2 == 0
 // @requires maxSpeedKmh > 0 && maxSpeedKmh <= maxAuthorizedSpeed
@@ -65,7 +66,8 @@ func NewCar(wheels int, wheelsDrive int, maxSpeedKmh int, manufacturer string) C
 `dbc4go` will generate the following code
 
 ```go
-// NewCar returns a Car struct
+// NewCar returns a Car struct.
+//
 // @requires wheels > 2
 // @requires wheelsDrive <= wheels && wheelsDrive >= 2 && wheelsDrive%2 == 0
 // @requires maxSpeedKmh > 0 && maxSpeedKmh <= maxAuthorizedSpeed
@@ -90,11 +92,53 @@ func NewCar(wheels int, wheelsDrive int, maxSpeedKmh int, manufacturer string) C
 Please notice that _short-statements_ are supported as part of _GO Boolean expression_, therefore it's okay to write a contract like the following:
 
 ```go
-// Accelerate the car
+// Accelerate the car.
+//
 // @requires delta > 0
 // @requires targetSpeed := c.speed + delta; targetSpeed <= c.maxSpeedKmh
 func (c *Car) Accelerate(delta int) { ... }
 ```
+
+#### On contract syntax
+
+`dbc4go` supports two contract syntaxes:
+1. _raw syntax_, the one used in the examples above, and
+2. _doc friendly_ syntax
+
+Both syntaxes have equivalent expressiveness power. The _doc friendly_ syntax lets `go` tools to render function and types contracts in a nicer and readable form.
+
+<table>
+<tr>
+<td> Raw contract </td> <td> doc friendly contract </td>
+</tr>
+<tr>
+<td>
+
+```go
+// NewCar returns a Car struct.
+//
+// @requires wheels > 2
+// @requires wheelsDrive <= wheels && wheelsDrive >= 2 && wheelsDrive%2 == 0
+// @requires maxSpeedKmh > 0 && maxSpeedKmh <= maxAuthorizedSpeed
+// @requires manufacturer != ""
+func NewCar(...) {...}
+```
+</td>
+<td>
+
+```go
+// NewCar returns a Car struct.
+//
+// Contract:
+//  - requires wheels > 2
+//  - requires wheelsDrive <= wheels && wheelsDrive >= 2 && wheelsDrive%2 == 0
+//  - requires maxSpeedKmh > 0 && maxSpeedKmh <= maxAuthorizedSpeed
+//  - requires manufacturer != ""
+func NewCar(...) {...}
+```
+</td>
+</tr>
+</table>
 
 ### `@ensures`
 
