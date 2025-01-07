@@ -156,7 +156,9 @@ func (fa fileAnalyzer) analyzeTypeContract(typeName string, doc *ast.CommentGrou
 	contractParser := contractParser.NewParser()
 	contract := contract.NewTypeContract(typeName)
 	for _, commentLine := range doc.List {
-		err := contractParser.ParseTypeContract(contract, commentLine.Text)
+		line := strings.TrimLeft(commentLine.Text, "/")
+		line = strings.TrimSpace(line)
+		err := contractParser.ParseTypeContract(contract, line)
 		if err != nil {
 			log.Printf("%s: Warning: %s", fa.positionAsString(commentLine.Pos()), err.Error())
 			continue

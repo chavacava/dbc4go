@@ -14,20 +14,29 @@ import (
 
 // Parser parses function contracts
 type Parser struct {
+	currentContractStyle contractStyleType
 }
+
+type contractStyleType byte
+
+const (
+	contractStyleUnknown       contractStyleType = 0
+	contractStyleRaw           contractStyleType = 1
+	contractStyleGoFmtFriendly contractStyleType = 2
+)
 
 // NewParser create a new contract parser
 func NewParser() Parser {
-	return Parser{}
+	return Parser{
+		currentContractStyle: contractStyleUnknown,
+	}
 }
-
-var reContracts = regexp.MustCompile(`\s*@(?P<kind>[a-z]+)(?:[\t ]+(?P<description>\[[\w\s\d,]+\]))?[\t ]+(?P<expr>[^$]+)`)
 
 // ParseTypeContract enrich the contract with the clause if present in the given comment line.
 //
 // @requires typeContract != nil
-func (p Parser) ParseTypeContract(typeContract *contract.TypeContract, line string) error {
-	kind, description, expr, matched := parseLine(line)
+func (p *Parser) ParseTypeContract(typeContract *contract.TypeContract, line string) error {
+	kind, description, expr, matched := p.parseLine(line)
 	if !matched {
 		return nil // nothing to do, there is no contract in this comment line
 	}
@@ -70,8 +79,8 @@ func (p Parser) ParseTypeContract(typeContract *contract.TypeContract, line stri
 // ParseFuncContract enrich the Contract with the clause if present in the given comment line.
 //
 // @requires funcContract != nil
-func (p Parser) ParseFuncContract(funcContract *contract.FuncContract, line string) error {
-	kind, description, expr, matched := parseLine(line)
+func (p *Parser) ParseFuncContract(funcContract *contract.FuncContract, line string) error {
+	kind, description, expr, matched := p.parseLine(line)
 	if !matched {
 		return nil // nothing to do, there is no contract in this comment line
 	}
@@ -132,33 +141,33 @@ func (p Parser) ParseFuncContract(funcContract *contract.FuncContract, line stri
 // @requires expr != ""
 // @ensures err != nil ==> r.Expression() == expr
 // @ensures err != nil ==> r.Description() == description
-func (p Parser) parseLet(expr string, description string) (r contract.Let, err error) {
+func (p *Parser) parseLet(expr string, description string) (r contract.Let, err error) {
 	return contract.NewLet(expr, description), nil
 }
 
 // @requires path != ""
 // @ensures r == "" ==> err != nil
-func (p Parser) parseImport(path string) (r string, err error) {
+func (p *Parser) parseImport(path string) (r string, err error) {
 	return path, nil
 }
 
 // @requires expr != ""
 // @ensures err != nil ==> r.Expression() == expr
 // @ensures err != nil ==> r.Description() == description
-func (Parser) parseRequires(expr, description string) (r contract.Requires, err error) {
+func (*Parser) parseRequires(expr, description string) (r contract.Requires, err error) {
 	return contract.NewRequires(expr, description), nil
 }
 
 // @requires expr != ""
 // @ensures err != nil ==> r.Expression() == expr
 // @ensures err != nil ==> r.Description() == description
-func (Parser) parseEnsures(expr, description string) (r contract.Ensures, err error) {
+func (*Parser) parseEnsures(expr, description string) (r contract.Ensures, err error) {
 	return contract.NewEnsures(expr, description), nil
 }
 
 // @ensures r != nil
 // @ensures err == nil
-func (p Parser) parseUnmodified(expr string) (r []contract.Ensures, err error) {
+func (p *Parser) parseUnmodified(expr string) (r []contract.Ensures, err error) {
 	result := []contract.Ensures{}
 
 	ids := strings.Split(expr, ",")
@@ -173,23 +182,52 @@ func (p Parser) parseUnmodified(expr string) (r []contract.Ensures, err error) {
 	return result, nil
 }
 
+var reContractClause = regexp.MustCompile(`\s*@(?P<kind>[a-z]+)(?:[\t ]+(?P<description>\[[\w\s\d,]+\]))?[\t ]+(?P<expr>[^$]+)`)
+var reGofmtFriendlyContractClause = regexp.MustCompile(`\s*-\s+(?P<kind>[a-z]+)(?:\s+(?P<description>[\w\s\d,]+): )?\s?(?P<expr>[^$]+)`)
+var reGofmtFriendlyContractBlockStarter = regexp.MustCompile(`\s*Contract:\s*$`)
+
 // parseLine extracts kind, description and expr from a given comment line
 // If the line is a contract annotation it returns matched true, false otherwise.
 // @ensures matched ==> kind != ""
 // @ensures matched ==> expr != ""
-func parseLine(line string) (kind, description, expr string, matched bool) {
-	r2 := reContracts.FindAllStringSubmatch(line, -1)
+func (p *Parser) parseLine(line string) (kind, description, expr string, matched bool) {
+	if p.currentContractStyle == contractStyleUnknown {
+		r2 := reGofmtFriendlyContractBlockStarter.FindAllStringSubmatch(line, -1)
+		if r2 != nil {
+			p.currentContractStyle = contractStyleGoFmtFriendly
+			return kind, description, expr, false
+		}
+	}
+
+	if p.currentContractStyle == contractStyleGoFmtFriendly {
+		r2 := reGofmtFriendlyContractClause.FindAllStringSubmatch(line, -1)
+		if r2 == nil {
+			p.currentContractStyle = contractStyleUnknown
+			return kind, description, expr, false
+		}
+		return extractContractPartsFromMatch(r2)
+	}
+
+	r2 := reContractClause.FindAllStringSubmatch(line, -1)
 	if r2 == nil {
 		return kind, description, expr, false
 	}
 
-	kind = r2[0][1]
-	expr = r2[0][2]
-	description = ""
-	if len(r2[0]) == 4 {
-		description = expr
-		expr = r2[0][3]
+	p.currentContractStyle = contractStyleRaw
+	return extractContractPartsFromMatch(r2)
+}
+
+func extractContractPartsFromMatch(match [][]string) (kind, description, expr string, ok bool) {
+	if len(match[0]) < 3 {
+		return kind, description, expr, false
 	}
 
+	kind = match[0][1]
+	expr = match[0][2]
+	description = ""
+	if len(match[0]) == 4 {
+		description = expr
+		expr = match[0][3]
+	}
 	return kind, description, expr, true
 }
