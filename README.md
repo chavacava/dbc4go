@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.com/chavacava/dbc4go.svg?branch=master)](https://travis-ci.com/chavacava/dbc4go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/chavacava/dbc4go)](https://goreportcard.com/report/github.com/chavacava/dbc4go)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # dbc4go
@@ -13,7 +11,7 @@
 </p>
 
 
-Contracts are embedded into comments, therefore code annotated with contracts is valid GO code.
+Contracts are embedded into comments, therefore code annotated with contracts is still valid GO code.
 
 This project uses contracts itself! Check the source code and the `Makefile` to see how.
 
@@ -226,11 +224,10 @@ func (c *Car) Accelerate(delta int) { ... }
 
 `dbc4go` supports two contract syntaxes:
 1. _standard_ syntax, the one introduced in the previous sections, and
-2. _raw syntax_ 
+2. _raw_ syntax 
 
 Both syntaxes have equivalent expressiveness power. 
-The _doc friendly_ syntax lets `go` tools to render function and types contracts in a nicer and readable form.
-While the raw syntax is easier/shorter to write.
+While the _raw_ syntax is easier/shorter to write, the _standard_ syntax lets `go` tools to render function and types contracts in a nicer and readable form.
 
 <table>
 <tr>
@@ -281,18 +278,4 @@ Raw syntax does not require a contract declaration, and contract clauses can be 
 
 `@import` _pakage name_
 
-You can **check [these examples](./examples/raw_contracts/)** of code annotated annotated with the raw syntax.
-
-
-#### Multiline Clause
-
-Sometimes, for ease the reading of clauses it's convenient to write them on more than a single line.
-To do so, you can use `/` to break clauses into multiple lines.
-
-```go
-// BankAccount data-model
-// @invariant /
-// [Account's balance is never negative] /
-// BankAccount.balance >= 0
-type BankAccount struct {
-```
+You can **check [these examples](./examples/raw_contracts/)** of code annotated with the raw syntax.

@@ -44,7 +44,7 @@ func NewBitBuffer(byteOrder binary.ByteOrder) (bitBuffer *BitBuffer) {
 // Feed data bytes into the buffer.
 //
 // @let initialBufferLen := len(bitBuffer.buffer)
-// @ensures [buffer grows according to data size] len(bitBuffer.buffer) == initialBufferLen + len(data)
+// @ensures buffer grows according to data size: len(bitBuffer.buffer) == initialBufferLen + len(data)
 // @unmodified bitBuffer.pos
 func (bitBuffer *BitBuffer) Feed(data []byte) {
 	bitBuffer.buffer = append(bitBuffer.buffer, data...)
@@ -63,14 +63,11 @@ func (bitBuffer *BitBuffer) Clear() {
 //
 // @let requiredBits := numBits
 // @let initialRemainingBits := bitBuffer.remainingBits()
-// @ensures [errs if not enough remaining bits] /
-// uint64(initialRemainingBits) < numBits ==> err == io.EOF
+// @ensures errs if not enough remaining bits: uint64(initialRemainingBits) < numBits ==> err == io.EOF
 // @import math
 // @let requiredBytes := int(math.Ceil(float64(requiredBits / 8)))
-// @ensures [if no err the returned data size corresponds to the required data size] /
-// err == nil ==> len(data) == requiredBytes
-// @ensures [if err the returned data size is smaller than the required data size] /
-// err != nil ==> len(data) < requiredBytes
+// @ensures if no err the returned data size corresponds to the required data size: err == nil ==> len(data) == requiredBytes
+// @ensures if err the returned data size is smaller than the required data size: err != nil ==> len(data) < requiredBytes
 //
 // Contract on the final buffer position
 // @let initialPos := bitBuffer.pos

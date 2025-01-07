@@ -20,9 +20,9 @@ type Parser struct {
 type contractStyleType byte
 
 const (
-	contractStyleUnknown       contractStyleType = 0
-	contractStyleRaw           contractStyleType = 1
-	contractStyleGoFmtFriendly contractStyleType = 2
+	contractStyleUnknown  contractStyleType = 0
+	contractStyleRaw      contractStyleType = 1
+	contractStyleStandard contractStyleType = 2
 )
 
 // NewParser create a new contract parser
@@ -182,9 +182,9 @@ func (p *Parser) parseUnmodified(expr string) (r []contract.Ensures, err error) 
 	return result, nil
 }
 
-var reContractClause = regexp.MustCompile(`\s*@(?P<kind>[a-z]+)(?:[\t ]+(?P<description>\[[\w\s\d,]+\]))?[\t ]+(?P<expr>[^$]+)`)
-var reGofmtFriendlyContractClause = regexp.MustCompile(`\s*-\s+(?P<kind>[a-z]+)(?:\s+(?P<description>[\w\s\d,]+): )?\s?(?P<expr>[^$]+)`)
-var reGofmtFriendlyContractBlockStarter = regexp.MustCompile(`\s*Contract:\s*$`)
+var reRawFormatContractClause = regexp.MustCompile(`\s*@(?P<kind>[a-z]+)(?:\s+(?P<description>[\w\s\d,]+): )?\s?(?P<expr>[^$]+)`)
+var reStandardFormatContractClause = regexp.MustCompile(`\s*-\s+(?P<kind>[a-z]+)(?:\s+(?P<description>[\w\s\d,]+): )?\s?(?P<expr>[^$]+)`)
+var reStandardFormatContractBlockStarter = regexp.MustCompile(`\s*Contract:\s*$`)
 
 // parseLine extracts kind, description and expr from a given comment line
 // If the line is a contract annotation it returns matched true, false otherwise.
@@ -192,15 +192,15 @@ var reGofmtFriendlyContractBlockStarter = regexp.MustCompile(`\s*Contract:\s*$`)
 // @ensures matched ==> expr != ""
 func (p *Parser) parseLine(line string) (kind, description, expr string, matched bool) {
 	if p.currentContractStyle == contractStyleUnknown {
-		r2 := reGofmtFriendlyContractBlockStarter.FindAllStringSubmatch(line, -1)
+		r2 := reStandardFormatContractBlockStarter.FindAllStringSubmatch(line, -1)
 		if r2 != nil {
-			p.currentContractStyle = contractStyleGoFmtFriendly
+			p.currentContractStyle = contractStyleStandard
 			return kind, description, expr, false
 		}
 	}
 
-	if p.currentContractStyle == contractStyleGoFmtFriendly {
-		r2 := reGofmtFriendlyContractClause.FindAllStringSubmatch(line, -1)
+	if p.currentContractStyle == contractStyleStandard {
+		r2 := reStandardFormatContractClause.FindAllStringSubmatch(line, -1)
 		if r2 == nil {
 			p.currentContractStyle = contractStyleUnknown
 			return kind, description, expr, false
@@ -208,7 +208,7 @@ func (p *Parser) parseLine(line string) (kind, description, expr string, matched
 		return extractContractPartsFromMatch(r2)
 	}
 
-	r2 := reContractClause.FindAllStringSubmatch(line, -1)
+	r2 := reRawFormatContractClause.FindAllStringSubmatch(line, -1)
 	if r2 == nil {
 		return kind, description, expr, false
 	}
