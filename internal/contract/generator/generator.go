@@ -361,7 +361,7 @@ func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []
 
 	// Generate ensures for invariants
 	if len(c.Ensures()) != 0 {
-		const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("(type invariant) %contract% not satisfied") }`
+		const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("(type invariant) function didn't ensure %contract%") }`
 		clauses := c.Ensures()
 		ensuresCode := make([]string, len(clauses))
 		for _, clause := range clauses {
@@ -371,7 +371,11 @@ func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []
 			}
 			ensure := strings.Replace(templateEnsure, "%shortStmt%", shortStmt, 1)
 			ensure = strings.Replace(ensure, "%cond%", expr, 1)
-			ensure = strings.Replace(ensure, "%contract%", escapeDoubleQuotes(clause.String()), 1)
+			contractStr := clause.Description()
+			if contractStr == "" {
+				contractStr = escapeDoubleQuotes(clause.Expression())
+			}
+			ensure = strings.Replace(ensure, "%contract%", contractStr, 1)
 			ensuresCode = append(ensuresCode, ensure)
 		}
 		const templateDeferredFunction = commentPrefix + `defer func(){%checks%}()`
@@ -388,12 +392,16 @@ func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []
 }
 
 func (fileAnalyzer) generateRequiresCode(req contract.Requires, panicMsgPrefix string) (r string) {
-	const templateRequire = commentPrefix + `if !(%cond%) { panic("%msgPrefix%%contract% not satisfied") }`
+	const templateRequire = commentPrefix + `if !(%cond%) { panic("%msgPrefix% function caller didn't satisfied %contract%") }`
 	exp := req.ExpandedExpression()
 
+	contractStr := req.Description()
+	if contractStr == "" {
+		contractStr = escapeDoubleQuotes(req.Expression())
+	}
 	r = strings.Replace(templateRequire, "%cond%", exp, 1)
 	r = strings.Replace(r, "%msgPrefix%", panicMsgPrefix, 1)
-	r = strings.Replace(r, "%contract%", escapeDoubleQuotes(req.String()), 1)
+	r = strings.Replace(r, "%contract%", contractStr, 1)
 
 	return r
 }
@@ -414,7 +422,7 @@ func (fileAnalyzer) generateLetCode(let contract.Let) (r string) {
 //   - requires len(clauses) > 0
 func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures) (r string) {
 	const templateOldVarDecl = commentPrefix + `%oldId% := %expr%`
-	const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("%contract% not satisfied") }`
+	const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("function didn't ensure %contract%") }`
 
 	ensuresCode := make([]string, len(clauses))
 	oldVarDecls := []string{}
@@ -430,7 +438,12 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures) (r string
 		}
 		ensure := strings.Replace(templateEnsure, "%shortStmt%", shortStmt, 1)
 		ensure = strings.Replace(ensure, "%cond%", expr, 1)
-		ensure = strings.Replace(ensure, "%contract%", escapeDoubleQuotes(clause.String()), 1)
+		contractStr := clause.Description()
+		if contractStr == "" {
+			contractStr = escapeDoubleQuotes(clause.Expression())
+		}
+
+		ensure = strings.Replace(ensure, "%contract%", contractStr, 1)
 		ensuresCode[i] = ensure
 	}
 
