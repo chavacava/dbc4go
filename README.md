@@ -128,7 +128,7 @@ _id_ must be a valid GO identifier and _expression_ a valid GO expression in the
 Defines an invariant property of a `struct`.
 An invariant property is a property of the struct that should always hold.
 Every method attached to the struct can assume the invariants hold and must preserve the invariants.
-Invariants are enforced, materialized as `@requires` and `@ensures` clauses, on every method attached to the struct.
+Invariants are enforced, materialized as `requires` and `ensures` clauses, on every method attached to the struct.
 
 Syntax:
 
@@ -272,7 +272,7 @@ Raw syntax does not require a contract declaration, and contract clauses can be 
 
 `@let` _id_ `:=` _expression_
 
-`invariant` _GO Boolean expression_
+`@invariant` _GO Boolean expression_
 
 `@unmodified` _identifiers list_
 
