@@ -114,7 +114,6 @@ func (p *Parser) ParseFuncContract(comments []*ast.Comment) (result *contract.Fu
 
 // Contract:
 //   - ensures r != nil
-//   - ensures err == nil
 func (p *Parser) parseUnmodified(expr string) (r []contract.Ensures) {
 	result := []contract.Ensures{}
 
