@@ -2,6 +2,7 @@ package contract
 
 import (
 	"go/ast"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,41 +11,49 @@ import (
 
 func TestConstructor(t *testing.T) {
 	fd := &ast.FuncDecl{}
-	tests := []struct {
-		target *ast.FuncDecl
-		result *FuncContract
-	}{
-		{
-			target: fd,
-			result: &FuncContract{requires: []Requires{}, ensures: []Ensures{}, target: fd, imports: map[string]struct{}{}},
-		},
+
+	target := fd
+	want := &FuncContract{
+		requires: []Requires{},
+		ensures:  []Ensures{},
+		lets:     []Let{},
+		target:   fd,
+		imports:  map[string]struct{}{},
 	}
 
-	for _, tc := range tests {
-		c := NewFuncContract(tc.target)
-		require.NotNil(t, c)
-		assert.Equal(t, c, tc.result)
-	}
+	got := NewFuncContract(target)
+	require.NotNil(t, got)
+	assert.Equal(t, got, want)
+}
+
+func TestTargetGetter(t *testing.T) {
+	fd := &ast.FuncDecl{}
+	target := fd
+	want := target
+
+	got := NewFuncContract(target)
+	require.NotNil(t, got)
+	assert.Equal(t, got.Target(), want)
 }
 
 func TestAddRequires(t *testing.T) {
 	sampleReq1 := NewRequires("1", "")
 	sampleReq2 := NewRequires("2", "")
 	tests := []struct {
-		requires         Requires
-		expectedRequires []Requires
+		requires Requires
+		want     []Requires
 	}{
 		{
-			requires:         sampleReq1,
-			expectedRequires: []Requires{sampleReq1},
+			requires: sampleReq1,
+			want:     []Requires{sampleReq1},
 		},
 		{
-			requires:         sampleReq2,
-			expectedRequires: []Requires{sampleReq1, sampleReq2},
+			requires: sampleReq2,
+			want:     []Requires{sampleReq1, sampleReq2},
 		},
 		{
-			requires:         sampleReq1,
-			expectedRequires: []Requires{sampleReq1, sampleReq2, sampleReq1},
+			requires: sampleReq1,
+			want:     []Requires{sampleReq1, sampleReq2, sampleReq1},
 		},
 	}
 
@@ -53,8 +62,83 @@ func TestAddRequires(t *testing.T) {
 
 	for _, tc := range tests {
 		c.AddRequires(tc.requires)
-		assert.Equal(t, c.requires, tc.expectedRequires)
+		assert.Equal(t, c.requires, tc.want)
 	}
+}
+
+func TestAddImports(t *testing.T) {
+	tests := []struct {
+		newPath string
+		want    []Requires
+	}{
+		{
+			newPath: "/dir",
+		},
+		{
+			newPath: "/dir2/",
+		},
+		{
+			newPath: "rootdir/dir1/dir2",
+		},
+	}
+
+	c := NewFuncContract(&ast.FuncDecl{})
+	require.NotNil(t, c)
+
+	for i, tc := range tests {
+		c.AddImport(tc.newPath)
+
+		if len(c.Imports()) != i+1 {
+			t.Fatalf("Expected len of imports %d but got %d (%+v)", i+1, len(c.imports), c.Imports())
+		}
+
+		normalizedPath := strings.Trim(tc.newPath, "\"")
+		_, ok := c.imports[normalizedPath]
+		if !ok {
+			t.Fatalf("Expected %s to be a key in the map but not %+v", normalizedPath, c.imports)
+		}
+	}
+}
+
+func TestAddLets(t *testing.T) {
+	sampleLet1 := NewLet("expr1", "descr1")
+	sampleLet2 := NewLet("expr2", "descr2")
+	tests := []struct {
+		let  Let
+		want []Let
+	}{
+		{
+			let:  sampleLet1,
+			want: []Let{sampleLet1},
+		},
+		{
+			let:  sampleLet2,
+			want: []Let{sampleLet1, sampleLet2},
+		},
+		{
+			let:  sampleLet1,
+			want: []Let{sampleLet1, sampleLet2, sampleLet1},
+		},
+	}
+
+	c := NewFuncContract(&ast.FuncDecl{})
+	require.NotNil(t, c)
+
+	for _, tc := range tests {
+		c.AddLet(tc.let)
+		assert.Equal(t, c.lets, tc.want)
+		assert.Equal(t, c.Lets(), tc.want)
+	}
+}
+
+func TestLetGetters(t *testing.T) {
+	expr := "expr"
+	descr := "descr"
+	let := NewLet(expr, descr)
+
+	assert.Equal(t, expr, let.Expression())
+	assert.Equal(t, expr, let.ExpandedExpression())
+	assert.Equal(t, descr, let.Description())
 }
 
 func TestTarget(t *testing.T) {
@@ -95,20 +179,20 @@ func TestAddEnsures(t *testing.T) {
 	sampleEns1 := NewEnsures("1", "")
 	sampleEns2 := NewEnsures("2", "")
 	tests := []struct {
-		ensures         Ensures
-		expectedEnsures []Ensures
+		ensures Ensures
+		want    []Ensures
 	}{
 		{
-			ensures:         sampleEns1,
-			expectedEnsures: []Ensures{sampleEns1},
+			ensures: sampleEns1,
+			want:    []Ensures{sampleEns1},
 		},
 		{
-			ensures:         sampleEns2,
-			expectedEnsures: []Ensures{sampleEns1, sampleEns2},
+			ensures: sampleEns2,
+			want:    []Ensures{sampleEns1, sampleEns2},
 		},
 		{
-			ensures:         sampleEns1,
-			expectedEnsures: []Ensures{sampleEns1, sampleEns2, sampleEns1},
+			ensures: sampleEns1,
+			want:    []Ensures{sampleEns1, sampleEns2, sampleEns1},
 		},
 	}
 
@@ -117,7 +201,7 @@ func TestAddEnsures(t *testing.T) {
 
 	for _, tc := range tests {
 		c.AddEnsures(tc.ensures)
-		assert.Equal(t, c.ensures, tc.expectedEnsures)
+		assert.Equal(t, c.ensures, tc.want)
 	}
 }
 
@@ -184,36 +268,6 @@ func TestRequiresExpandedExpr(t *testing.T) {
 	}
 }
 
-func TestRequiresString(t *testing.T) {
-	tests := []struct {
-		expr string
-	}{
-		{
-			expr: "",
-		},
-		{
-			expr: "true",
-		},
-		{
-			expr: "a == b.c",
-		},
-		{
-			expr: "a != b.c",
-		},
-		{
-			expr: "p ==> q",
-		},
-		{
-			expr: "a == b ==> b == c",
-		},
-	}
-
-	for _, tc := range tests {
-		r := Requires{expr: tc.expr}
-		assert.Equal(t, "@requires "+tc.expr, r.String())
-	}
-}
-
 func TestEnsuresExpandedExpr(t *testing.T) {
 	tests := []struct {
 		expr         string
@@ -253,35 +307,5 @@ func TestEnsuresExpandedExpr(t *testing.T) {
 		e := Ensures{expr: tc.expr}
 		_, got, _ := e.ExpandedExpression()
 		assert.Equal(t, tc.expandedExpr, got)
-	}
-}
-
-func TestEnsuresString(t *testing.T) {
-	tests := []struct {
-		expr string
-	}{
-		{
-			expr: "",
-		},
-		{
-			expr: "true",
-		},
-		{
-			expr: "a == b.c",
-		},
-		{
-			expr: "a != b.c",
-		},
-		{
-			expr: "p ==> q",
-		},
-		{
-			expr: "a == b ==> b == c",
-		},
-	}
-
-	for _, tc := range tests {
-		r := Ensures{expr: tc.expr}
-		assert.Equal(t, "@ensures "+tc.expr, r.String())
 	}
 }

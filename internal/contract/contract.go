@@ -47,14 +47,20 @@ func NewTypeContract(target string) (c *TypeContract) {
 	}
 }
 
+// IsEmpty returns true if this contract doesn't have requires nor ensure clauses, false otherwise.
+func (c *TypeContract) IsEmpty() bool {
+	return len(c.ensures) == 0 && len(c.requires) == 0
+}
+
 // AddEnsures adds a ensures to this contract.
 //
 // Contract:
 //   - requires e != nil
 //   - ensures len(c.ensures) == @old{len(c.ensures})} + 1
 //   - ensures c.ensures[len(c.ensures)-1] == e
-func (c *TypeContract) AddEnsures(e Ensures) {
+func (c *TypeContract) AddEnsures(e Ensures) *TypeContract {
 	c.ensures = append(c.ensures, e)
+	return c
 }
 
 // Ensures yields ensures clauses of this contract.
@@ -70,8 +76,9 @@ func (c *TypeContract) Ensures() (r []Ensures) {
 // Contract:
 //   - ensures len(c.requires) == @old{len(c.requires)} + 1
 //   - ensures c.requires[len(c.requires)-1] == r
-func (c *TypeContract) AddRequires(r Requires) {
+func (c *TypeContract) AddRequires(r Requires) *TypeContract {
 	c.requires = append(c.requires, r)
+	return c
 }
 
 // Requires yields requires clauses of this contract.
@@ -87,8 +94,9 @@ func (c *TypeContract) Requires() (r []Requires) {
 // Contract:
 //   - requires path != ""
 //   - ensures len(c.imports) >= @old{len(c.imports)}
-func (c *TypeContract) AddImport(path string) {
+func (c *TypeContract) AddImport(path string) *TypeContract {
 	c.imports[strings.Trim(path, "\"")] = struct{}{}
+	return c
 }
 
 // Imports returns imports required by this contract.
@@ -118,34 +126,31 @@ type FuncContract struct {
 // NewFuncContract creates a FuncContract.
 //
 // Contract:
-//   - requires target != nil
-//   - ensures c.target == target
 //   - ensures len(c.requires) == 0
 //   - ensures len(c.ensures) == 0
 //   - ensures len(c.imports) == 0
-func NewFuncContract(target *ast.FuncDecl) (c *FuncContract) {
+//   - ensures len(c.lets) == 0
+func NewFuncContract() (c *FuncContract) {
 	return &FuncContract{
 		requires: []Requires{},
 		ensures:  []Ensures{},
-		target:   target,
+		lets:     []Let{},
 		imports:  map[string]struct{}{},
 	}
 }
 
-// Target yields the function declaration to which this contract is attached to.
-//
-// Contract:
-//   - ensures t == c.target
-func (c *FuncContract) Target() (t *ast.FuncDecl) {
-	return c.target
+// IsEmpty returns true if this contract doesn't have requires nor ensure clauses, false otherwise.
+func (c *FuncContract) IsEmpty() bool {
+	return len(c.ensures) == 0 && len(c.requires) == 0
 }
 
 // AddRequires adds a requires to this contract.
 // Contract:
 //   - ensures len(c.requires) == @old{len(c.requires)} + 1
 //   - ensures c.requires[len(c.requires)-1] == r
-func (c *FuncContract) AddRequires(r Requires) {
+func (c *FuncContract) AddRequires(r Requires) *FuncContract {
 	c.requires = append(c.requires, r)
+	return c
 }
 
 // Requires yields requires clauses of this contract.
@@ -161,8 +166,9 @@ func (c *FuncContract) Requires() (r []Requires) {
 // Contract:
 //   - ensures len(c.ensures) == @old{len(c.ensures)} + 1
 //   - ensures c.ensures[len(c.ensures)-1] == e
-func (c *FuncContract) AddEnsures(e Ensures) {
+func (c *FuncContract) AddEnsures(e Ensures) *FuncContract {
 	c.ensures = append(c.ensures, e)
+	return c
 }
 
 // Ensures yields ensures clauses of this contract.
@@ -179,8 +185,9 @@ func (c *FuncContract) Ensures() (r []Ensures) {
 // Contract:
 //   - requires path != ""
 //   - ensures len(c.imports) >= @old{len(c.imports)}
-func (c *FuncContract) AddImport(path string) {
+func (c *FuncContract) AddImport(path string) *FuncContract {
 	c.imports[strings.Trim(path, "\"")] = struct{}{}
+	return c
 }
 
 // Imports returns imports required by this contract.
@@ -196,8 +203,9 @@ func (c *FuncContract) Imports() map[string]struct{} {
 // Contract:
 //   - ensures len(c.lets) == @old{len(c.lets)} + 1
 //   - ensures c.lets[len(c.lets)-1] == l
-func (c *FuncContract) AddLet(l Let) {
+func (c *FuncContract) AddLet(l Let) *FuncContract {
 	c.lets = append(c.lets, l)
+	return c
 }
 
 // Lets yields lets clauses of this contract.
@@ -266,15 +274,6 @@ func (r Requires) Description() (description string) {
 //   - ensures result != ""
 func (r Requires) ExpandedExpression() (result string) {
 	return rewriteImpliesExpr(r.expr)
-}
-
-// Contract:
-//   - ensures result != ""
-func (r Requires) String() string {
-	if r.description != "" {
-		r.description += " "
-	}
-	return "@requires " + r.description + r.expr
 }
 
 // Ensures is a @ensures clause of a contract.
@@ -359,15 +358,6 @@ func expandOldExpressions(expr string) (expanded string, mapping map[string]stri
 func oldID() (r string) {
 	OldCounter++
 	return fmt.Sprintf("old_%d", OldCounter)
-}
-
-// Contract:
-//   - ensures result != ""
-func (r Ensures) String() (result string) {
-	if r.description != "" {
-		r.description += " "
-	}
-	return "@ensures " + r.description + r.expr
 }
 
 var reImplies = regexp.MustCompile(`(.*)==>(.*)`)

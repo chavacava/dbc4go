@@ -156,16 +156,14 @@ func (fa fileAnalyzer) analyzeTypeContract(typeName string, doc *ast.CommentGrou
 		return // nothing to do, the type does not have associated documentation
 	}
 
-	contractParser := contractParser.NewParser()
-	contract := contract.NewTypeContract(typeName)
-	for _, commentLine := range doc.List {
-		line := strings.TrimLeft(commentLine.Text, "/")
-		line = strings.TrimSpace(line)
-		err := contractParser.ParseTypeContract(contract, line)
-		if err != nil {
-			log.Printf("%s: Warning: %s", fa.positionAsString(commentLine.Pos()), err.Error())
-			continue
-		}
+	parser := contractParser.NewParser()
+	contract, err := parser.ParseTypeContract(typeName, doc.List)
+	if err != nil {
+		log.Printf("Warning: %v", err)
+	}
+
+	if contract.IsEmpty() {
+		return // found no contracts for this type
 	}
 
 	fa.addCodeForTypeInvariant(typeName, contract)
@@ -227,33 +225,14 @@ func (fa fileAnalyzer) getCodeForContracts(fd *ast.FuncDecl) (result []string, e
 		return result, errs // the function has not attached documentation
 	}
 
-	contractParser := contractParser.NewParser()
-	contract := contract.NewFuncContract(fd)
-	comments := fd.Doc.List
-	acc := ""
-	mustAcc := false
-	for _, commentLine := range comments {
-		line := strings.TrimLeft(commentLine.Text, "/")
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-		if strings.HasSuffix(line, "/") {
-			line = strings.TrimRight(line, "/") + " "
-			mustAcc = true
-		}
-		acc += line
-		if mustAcc {
-			mustAcc = false
-			continue
-		}
-		err := contractParser.ParseFuncContract(contract, acc)
-		if err != nil {
-			log.Printf("%s: Warning: %s", fa.positionAsString(commentLine.Pos()), err.Error())
-			continue
-		}
+	parser := contractParser.NewParser()
+	contract, err := parser.ParseFuncContract(fd.Doc.List)
+	if err != nil {
+		return result, append(errs, err)
+	}
 
-		acc = ""
+	if contract.IsEmpty() {
+		return result, errs // the function has not attached contract
 	}
 
 	result, errs = fa.generateCode(contract)
@@ -392,7 +371,7 @@ func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []
 }
 
 func (fileAnalyzer) generateRequiresCode(req contract.Requires, panicMsgPrefix string) (r string) {
-	const templateRequire = commentPrefix + `if !(%cond%) { panic("%msgPrefix% function caller didn't satisfied %contract%") }`
+	const templateRequire = commentPrefix + `if !(%cond%) { panic("%msgPrefix%function caller didn't satisfied %contract%") }`
 	exp := req.ExpandedExpression()
 
 	contractStr := req.Description()

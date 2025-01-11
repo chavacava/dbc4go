@@ -12,30 +12,13 @@ import (
 )
 
 func TestDBC4GO(t *testing.T) {
-	tests := []struct {
-		input     string
-		expOutput string // expected output
-	}{
-		{
-			input:     "./testdata/1.input",
-			expOutput: "./testdata/1.output",
-		},
-		{
-			input:     "./testdata/2.input",
-			expOutput: "./testdata/2.output",
-		},
-		{
-			input:     "./testdata/3.input",
-			expOutput: "./testdata/3.output",
-		},
-		{
-			input:     "./testdata/4.input",
-			expOutput: "./testdata/4.output",
-		},
-		{
-			input:     "./testdata/unmodified.input",
-			expOutput: "./testdata/unmodified.output",
-		},
+	tests := []string{
+		"old",
+		"unmodified",
+		"let",
+		"invariant",
+		"multiline",
+		"import",
 	}
 
 	tmpDir, err := os.MkdirTemp("", "testing-dbc4go")
@@ -46,9 +29,10 @@ func TestDBC4GO(t *testing.T) {
 
 	for i, test := range tests {
 		outputFilename := filepath.Join(tmpDir, strconv.Itoa(i)+".go")
-		input, err := os.Open(test.input)
+		inputFilename := filepath.Join("./testdata", test+".go")
+		input, err := os.Open(inputFilename)
 		if err != nil {
-			t.Errorf("Unable to open input file %s: %v", test.input, err)
+			t.Errorf("Unable to open input file %s: %v", inputFilename, err)
 			continue
 		}
 
@@ -56,20 +40,20 @@ func TestDBC4GO(t *testing.T) {
 		if err != nil {
 			log.Fatalf("Unable to create output file '%s': %v", outputFilename, err)
 		}
-		defer output.Close()
 
 		err = generator.GenerateCode(input, output)
 		if err != nil {
 			t.Fatalf("Unable to generate code for test #%d: %v", i, err)
 		}
 
-		equal, err := areFilesEqual(test.expOutput, outputFilename)
+		wantFilename := filepath.Join("./testdata", test+".want.go")
+		equal, err := areFilesEqual(wantFilename, outputFilename)
 		if err != nil {
 			t.Fatalf("Error when comparing generated file with reference: %v", err)
 		}
 
 		if !equal {
-			t.Fatalf("Files %q and %q are not equal", test.expOutput, outputFilename)
+			t.Fatalf("Files %q and %q are not equal", wantFilename, outputFilename)
 		}
 
 		input.Close()

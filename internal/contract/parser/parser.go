@@ -5,6 +5,8 @@ package parser
 
 import (
 	"fmt"
+	"go/ast"
+	"iter"
 	"regexp"
 	"strings"
 
@@ -32,149 +34,88 @@ func NewParser() Parser {
 	}
 }
 
-// ParseTypeContract enrich the contract with the clause if present in the given comment line.
-//
-// Contract:
-//   - requires typeContract != nil
-func (p *Parser) ParseTypeContract(typeContract *contract.TypeContract, line string) error {
-	kind, description, expr, matched := p.parseLine(line)
-	if !matched {
-		return nil // nothing to do, there is no contract in this comment line
+func (p *Parser) ParseTypeContract(typeName string, comments []*ast.Comment) (result *contract.TypeContract, err error) {
+	result = contract.NewTypeContract(typeName)
+	for canonicalLine := range p.canonicalLinesFromComments(comments) {
+		kind, description, expr, matched := p.parseLine(canonicalLine)
+		if !matched {
+			continue // nothing to do, there is no contract in this comment line
+		}
+
+		switch kind {
+		case "invariant":
+			if contract.Re4old.MatchString(expr) {
+				return result, fmt.Errorf("@old can not be used in 'invariant' expressions: %s", expr)
+			}
+
+			ensuresClause := contract.NewEnsures(expr, description) // invariants are ensures that apply to all methods of the type
+
+			result.AddEnsures(ensuresClause)
+
+			requiresClause := contract.NewRequires(expr, description) // invariants are, also, requires that apply to all methods of the type
+
+			result.AddRequires(requiresClause)
+		case "import":
+			result.AddImport(expr)
+		case "ensures", "requires", "unmodified":
+			return result, fmt.Errorf("'%s' can not be used in type contracts: %s %s", kind, kind, expr)
+		default:
+			return result, errors.Errorf("unknown contract kind %s", kind)
+		}
 	}
 
-	switch kind {
-	case "invariant":
-		if contract.Re4old.MatchString(expr) {
-			return fmt.Errorf("@old can not be used in @invariant expressions: %s", expr)
+	return result, nil
+}
+
+func (p *Parser) ParseFuncContract(comments []*ast.Comment) (result *contract.FuncContract, err error) {
+	result = contract.NewFuncContract()
+	for canonicalLine := range p.canonicalLinesFromComments(comments) {
+		kind, description, expr, matched := p.parseLine(canonicalLine)
+		if !matched {
+			continue // nothing to do, there is no contract in this comment line
 		}
 
-		ensuresClause, err := p.parseEnsures(expr, description) // invariants are ensures that apply to all methods of the type
-		if err != nil {
-			return fmt.Errorf("invalid @invariant clause: %w", err)
+		switch kind {
+		case "requires":
+			if contract.Re4old.MatchString(expr) {
+				return result, fmt.Errorf("@old can not be used in 'requires' expressions: %s", expr)
+			}
+
+			clause := contract.NewRequires(expr, description)
+			result.AddRequires(clause)
+		case "ensures":
+			clause := contract.NewEnsures(expr, description)
+			result.AddEnsures(clause)
+		case "import":
+			result.AddImport(expr)
+		case "invariant":
+			return result, errors.New("can not define invariants for functions/methods")
+		case "let":
+			if contract.Re4old.MatchString(expr) {
+				return result, fmt.Errorf("@old can not be used in 'let' expressions: %s", expr)
+			}
+
+			clause := contract.NewLet(expr, description)
+
+			result.AddLet(clause)
+		case "unmodified":
+			clauses := p.parseUnmodified(expr)
+
+			for _, clause := range clauses {
+				result.AddEnsures(clause)
+			}
+		default:
+			return result, errors.Errorf("unknown contract kind %s", kind)
 		}
-
-		typeContract.AddEnsures(ensuresClause)
-
-		requiresClause, err := p.parseRequires(expr, description) // invariants are, also, requires that apply to all methods of the type
-		if err != nil {
-			return fmt.Errorf("invalid @invariant clause: %w", err)
-		}
-
-		typeContract.AddRequires(requiresClause)
-	case "import":
-		clause, err := p.parseImport(expr)
-		if err != nil {
-			return fmt.Errorf("invalid @import clause: %w", err)
-		}
-
-		typeContract.AddImport(clause)
-	case "ensures", "requires", "unmodified":
-		return fmt.Errorf("@%s can not be used in type contracts: %s", kind, expr)
-	default:
-		return errors.Errorf("unknown contract kind %s", kind)
 	}
 
-	return nil
-}
-
-// ParseFuncContract enrich the Contract with the clause if present in the given comment line.
-//
-// Contract:
-//   - requires funcContract != nil
-func (p *Parser) ParseFuncContract(funcContract *contract.FuncContract, line string) error {
-	kind, description, expr, matched := p.parseLine(line)
-	if !matched {
-		return nil // nothing to do, there is no contract in this comment line
-	}
-
-	switch kind {
-	case "requires":
-		if contract.Re4old.MatchString(expr) {
-			return fmt.Errorf("@old can not be used in @requires expressions: %s", expr)
-		}
-
-		clause, err := p.parseRequires(expr, description)
-		if err != nil {
-			return fmt.Errorf("invalid @requires clause: %w", err)
-		}
-
-		funcContract.AddRequires(clause)
-	case "ensures":
-		clause, err := p.parseEnsures(expr, description)
-		if err != nil {
-			return fmt.Errorf("invalid @ensures clause: %w", err)
-		}
-
-		funcContract.AddEnsures(clause)
-	case "import":
-		clause, err := p.parseImport(expr)
-		if err != nil {
-			return fmt.Errorf("invalid @import clause: %w", err)
-		}
-
-		funcContract.AddImport(clause)
-	case "let":
-		if contract.Re4old.MatchString(expr) {
-			return fmt.Errorf("@old can not be used in @let expressions: %s", expr)
-		}
-
-		clause, err := p.parseLet(expr, description)
-		if err != nil {
-			return fmt.Errorf("invalid @let clause: %w", err)
-		}
-
-		funcContract.AddLet(clause)
-	case "unmodified":
-		clauses, err := p.parseUnmodified(expr)
-		if err != nil {
-			return fmt.Errorf("invalid @import clause: %w", err)
-		}
-
-		for _, clause := range clauses {
-			funcContract.AddEnsures(clause)
-		}
-	default:
-		return errors.Errorf("unknown contract kind %s", kind)
-	}
-
-	return nil
-}
-
-// Contract:
-//   - requires expr != ""
-//   - ensures err != nil ==> r.Expression() == expr
-//   - ensures err != nil ==> r.Description() == description
-func (p *Parser) parseLet(expr string, description string) (r contract.Let, err error) {
-	return contract.NewLet(expr, description), nil
-}
-
-// Contract:
-//   - requires path != ""
-//   - ensures r == "" ==> err != nil
-func (p *Parser) parseImport(path string) (r string, err error) {
-	return path, nil
-}
-
-// Contract:
-//   - requires expr != ""
-//   - ensures err != nil ==> r.Expression() == expr
-//   - ensures err != nil ==> r.Description() == description
-func (*Parser) parseRequires(expr, description string) (r contract.Requires, err error) {
-	return contract.NewRequires(expr, description), nil
-}
-
-// Contract:
-//   - requires expr != ""
-//   - ensures err != nil ==> r.Expression() == expr
-//   - ensures err != nil ==> r.Description() == description
-func (*Parser) parseEnsures(expr, description string) (r contract.Ensures, err error) {
-	return contract.NewEnsures(expr, description), nil
+	return result, nil
 }
 
 // Contract:
 //   - ensures r != nil
 //   - ensures err == nil
-func (p *Parser) parseUnmodified(expr string) (r []contract.Ensures, err error) {
+func (p *Parser) parseUnmodified(expr string) (r []contract.Ensures) {
 	result := []contract.Ensures{}
 
 	ids := strings.Split(expr, ",")
@@ -186,7 +127,7 @@ func (p *Parser) parseUnmodified(expr string) (r []contract.Ensures, err error) 
 		result = append(result, newEnsure)
 	}
 
-	return result, nil
+	return result
 }
 
 var reRawFormatContractClause = regexp.MustCompile(`\s*@(?P<kind>[a-z]+)(?:\s+(?P<description>[\w\s\d,]+): )?\s?(?P<expr>[^$]+)`)
@@ -239,4 +180,35 @@ func extractContractPartsFromMatch(match [][]string) (kind, description, expr st
 		expr = match[0][3]
 	}
 	return kind, description, expr, true
+}
+
+func (*Parser) canonicalLinesFromComments(comments []*ast.Comment) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		acc := ""
+		mustAcc := false
+		for _, commentLine := range comments {
+			line := strings.TrimLeft(commentLine.Text, "/")
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+
+			if strings.HasSuffix(line, "/") {
+				line = strings.TrimRight(line, "/") + " "
+				mustAcc = true
+			}
+
+			acc += line
+
+			if mustAcc {
+				mustAcc = false
+				continue
+			}
+
+			if !yield(acc) {
+				return
+			}
+			acc = ""
+		}
+	}
 }
