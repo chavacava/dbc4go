@@ -130,8 +130,9 @@ func (p *Parser) parseUnmodified(expr string) (r []contract.Ensures) {
 }
 
 var reRawFormatContractClause = regexp.MustCompile(`\s*@(?P<kind>[a-z]+)(?:\s+(?P<description>[\w\s\d,]+): )?\s?(?P<expr>[^$]+)`)
+var reDirectiveFormatContractClause = regexp.MustCompile(`\s*contract\:(?P<kind>[a-z]+)(?:\s+(?P<description>[\w\s\d,]+): )?\s?(?P<expr>[^$]+)`)
 var reStandardFormatContractClause = regexp.MustCompile(`\s*-\s+(?P<kind>[a-z]+)(?:\s+(?P<description>[\w\s\d,]+): )?\s?(?P<expr>[^$]+)`)
-var reStandardFormatContractBlockStarter = regexp.MustCompile(`\s*Contract:\s*$`)
+var reStandardFormatContractBlockStarter = regexp.MustCompile(`\s*[Cc]ontract:\s*$`)
 
 // parseLine extracts kind, description and expr from a given comment line
 // If the line is a contract annotation it returns matched true, false otherwise.
@@ -140,6 +141,11 @@ var reStandardFormatContractBlockStarter = regexp.MustCompile(`\s*Contract:\s*$`
 //   - ensures matched ==> kind != ""
 //   - ensures matched ==> expr != ""
 func (p *Parser) parseLine(line string) (kind, description, expr string, matched bool) {
+	r2 := reDirectiveFormatContractClause.FindAllStringSubmatch(line, -1)
+	if r2 != nil {
+		return extractContractPartsFromMatch(r2)
+	}
+
 	if p.currentContractStyle == contractStyleUnknown {
 		r2 := reStandardFormatContractBlockStarter.FindAllStringSubmatch(line, -1)
 		if r2 != nil {
@@ -157,7 +163,7 @@ func (p *Parser) parseLine(line string) (kind, description, expr string, matched
 		return extractContractPartsFromMatch(r2)
 	}
 
-	r2 := reRawFormatContractClause.FindAllStringSubmatch(line, -1)
+	r2 = reRawFormatContractClause.FindAllStringSubmatch(line, -1)
 	if r2 == nil {
 		return kind, description, expr, false
 	}
@@ -178,7 +184,7 @@ func extractContractPartsFromMatch(match [][]string) (kind, description, expr st
 		description = expr
 		expr = match[0][3]
 	}
-	return kind, description, expr, true
+	return kind, description, strings.TrimSpace(expr), true
 }
 
 func (*Parser) canonicalLinesFromComments(comments []*ast.Comment) iter.Seq[string] {
@@ -188,6 +194,7 @@ func (*Parser) canonicalLinesFromComments(comments []*ast.Comment) iter.Seq[stri
 		for _, commentLine := range comments {
 			line := strings.TrimLeft(commentLine.Text, "/")
 			line = strings.TrimSpace(line)
+
 			if line == "" {
 				continue
 			}

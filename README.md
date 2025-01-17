@@ -32,7 +32,7 @@ Usage of dbc4go:
 This project is in a pre-ALPHA state.
 Syntax of contracts might evolve in future versions.
 
-## Available directives to write contracts
+## Available contract clauses
 
 ### `requires`
 
@@ -222,21 +222,17 @@ func (c *Car) Accelerate(delta int) { ... }
 
 ### Contract Syntax 
 
-`dbc4go` supports two contract syntaxes:
-1. _standard_ syntax, the one introduced in the previous sections, and
-2. _raw_ syntax 
+`dbc4go` supports three contract syntaxes:
+1. _standard_ syntax, the one introduced in the previous sections,
+2. _raw_ syntax, and
+2. _directive_ syntax 
 
-Both syntaxes have equivalent expressiveness power. 
+All three syntaxes have equivalent expressiveness power. 
 While the _raw_ syntax is easier/shorter to write, the _standard_ syntax lets `go` tools to render function and types contracts in a nicer and readable form.
 
-<table>
-<tr>
-<td> doc friendly contract </td> <td> Raw contract </td>
-</tr>
-<tr>
-<td>
-
 ```go
+// Contract in standard syntax
+
 // NewCar returns a Car struct.
 //
 // Contract:
@@ -246,10 +242,10 @@ While the _raw_ syntax is easier/shorter to write, the _standard_ syntax lets `g
 //  - requires manufacturer != ""
 func NewCar(...) {...}
 ```
-</td>
-<td>
 
 ```go
+// Contract in raw syntax
+
 // NewCar returns a Car struct.
 //
 // @requires wheels > 2
@@ -258,11 +254,24 @@ func NewCar(...) {...}
 // @requires manufacturer != ""
 func NewCar(...) {...}
 ```
-</td>
-</tr>
-</table>
+Raw syntax doesn't require a contract declaration, and contract clauses can be line-interleaved within non-contractual documentation.
 
-Raw syntax does not require a contract declaration, and contract clauses can be interleaved within non-contractual documentation.
+Directive syntax is useful in situations where you need to add a contract clause that will not render in the documentation.
+For example, if a struct invariant refers to a private field and you don't want to leak the field's name in the documentation you can define the invariant using directive syntax:
+
+```go
+// Contract in directive syntax
+
+// BankAccount represents a bank account.
+//
+//contract:invariant !BankAccount.closed ==> BankAccount.balance >= minBalance
+//contract:invariant !BankAccount.closed ==> BankAccount.balance <= maxBalance
+//contract:invariant BankAccount.closed ==> BankAccount.balance == 0
+type BankAccount struct {
+	balance int  // the balance of the account
+	closed  bool // is the account closed?
+}
+```
 
 #### Raw syntax summary
 
@@ -272,10 +281,26 @@ Raw syntax does not require a contract declaration, and contract clauses can be 
 
 `@let` _id_ `:=` _expression_
 
-`@invariant` _GO Boolean expression_
+`@invariant` [_description_:] _GO Boolean expression_
 
 `@unmodified` _identifiers list_
 
 `@import` _pakage name_
 
 You can **check [these examples](./examples/raw_contracts/)** of code annotated with the raw syntax.
+
+#### Directive syntax summary
+
+Contract clauses must respect the directive comment format as defined in the **Syntax** section of [Go Doc Comments](https://tip.golang.org/doc/comment) 
+
+`contract:requires` [_description_:] _GO Boolean expression_
+
+`contract:ensures` [_description_:] _GO Boolean expression_
+
+`contract:let` _id_ `:=` _expression_
+
+`contract:invariant` [_description_:] _GO Boolean expression_
+
+`contract:unmodified` _identifiers list_
+
+`contract:import` _pakage name_
