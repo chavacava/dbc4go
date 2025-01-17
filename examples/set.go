@@ -25,7 +25,7 @@ func NewSet() (s *Set) {
 // Contract:
 //   - ensures element is present in the set: s.Contains(value)
 //   - let alreadyPresent := s.Contains(value)
-//   - ensures cardinality grows if new element: alreadyPresent ==> @old{len(s.elements)} == len(s.elements) - 1
+//   - ensures cardinality grows if new element: !alreadyPresent ==> @old{len(s.elements)} == len(s.elements) - 1
 //   - ensures cardinality remains the same if no new element: alreadyPresent ==> @old{len(s.elements)} == len(s.elements)
 func (s *Set) Add(value string) {
 	s.elements[value] = struct{}{}
@@ -37,7 +37,7 @@ func (s *Set) Add(value string) {
 //   - ensures element is not present in the set: !s.Contains(value)
 //   - let alreadyPresent := s.Contains(value)
 //   - ensures cardinality shirks if element was in the set: alreadyPresent ==> @old{len(s.elements)-1} == len(s.elements)
-//   - ensures cardinality remains the same if element was not in the set: alreadyPresent ==> @old{len(s.elements)} == len(s.elements)
+//   - ensures cardinality remains the same if element was not in the set: !alreadyPresent ==> @old{len(s.elements)} == len(s.elements)
 func (s *Set) Remove(value string) {
 	delete(s.elements, value)
 }
@@ -65,7 +65,7 @@ func (s *Set) Size() (result int) {
 // List returns all elements in the set as a slice.
 //
 // Contract:
-//   - ensures len(result) == @old{len(s.elements)}
+//   - ensures len(result) == len(s.elements)
 //   - unmodified len(s.elements)
 func (s *Set) List() (result []string) {
 	keys := make([]string, 0, len(s.elements))
