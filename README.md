@@ -27,11 +27,6 @@ Usage of dbc4go:
         output file (defaults to stdout)
 ```
 
-# Current State
-
-This project is in a pre-ALPHA state.
-Syntax of contracts might evolve in future versions.
-
 ## Available contract clauses
 
 ### `requires`
@@ -135,7 +130,7 @@ Syntax:
 `invariant` _GO Boolean expression_
 
 The expression can make reference to any identifier available in the scope of the struct declaration and any _private_ field identifier of the `struct` to which the invariant applies to.
-References to field must be a selector expressions of the form `<struct-name>.<field-name>` 
+References to fields must be a selector expression of the form `<struct-name>.<field-name>` 
 
 Examples:
 
@@ -165,11 +160,11 @@ type BankAccount struct {
 
 ### `unmodified`
 
-Enforces the function keeps unmodified the given list of identifiers.
+Enforces the function keeps unmodified the given list of expressions.
 
 Syntax:
 
-`unmodified` _identifiers list_
+`unmodified` _expressions list_
 
 Example:
 
@@ -184,7 +179,7 @@ Example:
 //   - unmodified c.wheels, c.wheelsDrive, c.maxSpeedKmh, c.manufacturer
 func (c *Car) Accelerate(delta int) { ... }
 ```
-`unmodified` is just syntax sugar for simplify writing `ensures id == @old{id}`
+`unmodified` is just syntax sugar for simplify writing `ensures expr == @old{expr}`
 
 ### `import`
 
@@ -228,7 +223,8 @@ func (c *Car) Accelerate(delta int) { ... }
 2. _directive_ syntax 
 
 All three syntaxes have equivalent expressiveness power. 
-While the _raw_ syntax is easier/shorter to write, the _standard_ syntax lets `go` tools to render function and types contracts in a nicer and readable form.
+
+While the _raw_ syntax is easier/shorter to write, the _standard_ syntax lets GO tools and IDE to render function and types contracts in a nicer and readable form.
 
 ```go
 // Contract in standard syntax
@@ -254,9 +250,9 @@ func NewCar(...) {...}
 // @requires manufacturer != ""
 func NewCar(...) {...}
 ```
-Raw syntax doesn't require a contract declaration, and contract clauses can be line-interleaved within non-contractual documentation.
+_Raw_ syntax doesn't require a contract declaration, and contract clauses can be line-interleaved within non-contractual documentation.
 
-Directive syntax is useful in situations where you need to add a contract clause that will not render in the documentation.
+_Directive_ syntax is useful in situations where you need to add a contract clause that will not render in the documentation.
 For example, if a struct invariant refers to a private field and you don't want to leak the field's name in the documentation you can define the invariant using directive syntax:
 
 ```go
@@ -272,6 +268,7 @@ type BankAccount struct {
 	closed  bool // is the account closed?
 }
 ```
+(notice there is no blank space between the comment delimiter `//` and the contract clause)
 
 #### Raw syntax summary
 
