@@ -364,94 +364,13 @@ func TestParseFuncContract(t *testing.T) {
 				"// @unmodified /",
 				"// a",
 			},
-			wantContract: contract.NewFuncContract().AddImport(" a").
+			wantContract: contract.NewFuncContract().AddImport("a").
 				AddLet(contract.NewLet("b :=  true", "")).
 				AddRequires(contract.NewRequires("c != true", "dummy req")).
 				AddEnsures(contract.NewEnsures("@old(d) == d  ==> false", "dummy ensures")).
 				AddEnsures(contract.NewEnsures("@old{a} == a", "a unmodified")),
 			wantErr: nil,
 		},
-		/*
-			{
-				name: "comment with standard invariant",
-				comments: []string{
-					"// TypeFoo is a model for foo",
-					"// Contract:",
-					"//   - invariant a == a",
-				},
-				wantContract: contract.NewTypeContract(target).AddEnsures(
-					contract.NewEnsures("a == a", ""),
-				).AddRequires(
-					contract.NewRequires("a == a", ""),
-				),
-				wantErr: nil,
-			},
-			{
-				name: "comment with @old in standard invariant",
-				comments: []string{
-					"// TypeFoo is a model for foo",
-					"// Contract:",
-					`//   - invariant a == @old{a}`,
-				},
-				wantContract: contract.NewTypeContract(target),
-				wantErr:      errors.New("@old can not be used in 'invariant' expressions: a == @old{a}"),
-			},
-			{
-				name: "comment with in standard invariant + import",
-				comments: []string{
-					"// TypeFoo is a model for foo",
-					"// Contract:",
-					"//   - import math",
-					"//   - import string",
-					"//   - invariant a == a",
-				},
-				wantContract: contract.NewTypeContract(target).AddEnsures(
-					contract.NewEnsures("a == a", ""),
-				).AddRequires(
-					contract.NewRequires("a == a", ""),
-				).AddImport("string").AddImport("math"),
-				wantErr: nil,
-			},
-			{
-				name: "comment with invalid @ensure in type contract",
-				comments: []string{
-					"// TypeFoo is a model for foo",
-					"// Contract:",
-					"//   - ensures a == true",
-				},
-				wantContract: contract.NewTypeContract(target),
-				wantErr:      errors.New("'ensures' can not be used in type contracts: ensures a == true"),
-			},
-			{
-				name: "comment with invalid @requires in type contract",
-				comments: []string{
-					"// TypeFoo is a model for foo",
-					"// Contract:",
-					"//   - requires a == true",
-				},
-				wantContract: contract.NewTypeContract(target),
-				wantErr:      errors.New("'requires' can not be used in type contracts: requires a == true"),
-			},
-			{
-				name: "comment with invalid @unmodified in type contract",
-				comments: []string{
-					"// TypeFoo is a model for foo",
-					"// Contract:",
-					"//   - unmodified a",
-				},
-				wantContract: contract.NewTypeContract(target),
-				wantErr:      errors.New("'unmodified' can not be used in type contracts: unmodified a"),
-			},
-			{
-				name: "comment with unknown clause 'unknown' in type contract",
-				comments: []string{
-					"// TypeFoo is a model for foo",
-					"// Contract:",
-					"//   - unknown a",
-				},
-				wantContract: contract.NewTypeContract(target),
-				wantErr:      errors.New("unknown contract kind unknown"),
-			},*/
 	}
 
 	for _, tc := range tests {
@@ -472,7 +391,7 @@ func TestParseFuncContract(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, tc.wantContract, got, "test %q: contract was not the expexted", tc.name)
+		assert.Equal(t, tc.wantContract, got, "test %q: contract was not the expected", tc.name)
 	}
 }
 

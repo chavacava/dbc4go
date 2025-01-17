@@ -1,7 +1,6 @@
 package contract
 
 import (
-	"go/ast"
 	"strings"
 	"testing"
 
@@ -10,30 +9,16 @@ import (
 )
 
 func TestConstructor(t *testing.T) {
-	fd := &ast.FuncDecl{}
-
-	target := fd
 	want := &FuncContract{
 		requires: []Requires{},
 		ensures:  []Ensures{},
 		lets:     []Let{},
-		target:   fd,
 		imports:  map[string]struct{}{},
 	}
 
-	got := NewFuncContract(target)
+	got := NewFuncContract()
 	require.NotNil(t, got)
 	assert.Equal(t, got, want)
-}
-
-func TestTargetGetter(t *testing.T) {
-	fd := &ast.FuncDecl{}
-	target := fd
-	want := target
-
-	got := NewFuncContract(target)
-	require.NotNil(t, got)
-	assert.Equal(t, got.Target(), want)
 }
 
 func TestAddRequires(t *testing.T) {
@@ -57,7 +42,7 @@ func TestAddRequires(t *testing.T) {
 		},
 	}
 
-	c := NewFuncContract(&ast.FuncDecl{})
+	c := NewFuncContract()
 	require.NotNil(t, c)
 
 	for _, tc := range tests {
@@ -82,7 +67,7 @@ func TestAddImports(t *testing.T) {
 		},
 	}
 
-	c := NewFuncContract(&ast.FuncDecl{})
+	c := NewFuncContract()
 	require.NotNil(t, c)
 
 	for i, tc := range tests {
@@ -121,7 +106,7 @@ func TestAddLets(t *testing.T) {
 		},
 	}
 
-	c := NewFuncContract(&ast.FuncDecl{})
+	c := NewFuncContract()
 	require.NotNil(t, c)
 
 	for _, tc := range tests {
@@ -139,14 +124,6 @@ func TestLetGetters(t *testing.T) {
 	assert.Equal(t, expr, let.Expression())
 	assert.Equal(t, expr, let.ExpandedExpression())
 	assert.Equal(t, descr, let.Description())
-}
-
-func TestTarget(t *testing.T) {
-	fd := &ast.FuncDecl{}
-	c := FuncContract{target: fd}
-
-	tgt := c.Target()
-	assert.Equal(t, tgt, fd)
 }
 
 func TestRequires(t *testing.T) {
@@ -196,7 +173,7 @@ func TestAddEnsures(t *testing.T) {
 		},
 	}
 
-	c := NewFuncContract(&ast.FuncDecl{})
+	c := NewFuncContract()
 	require.NotNil(t, c)
 
 	for _, tc := range tests {
