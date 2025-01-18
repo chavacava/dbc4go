@@ -17,6 +17,7 @@ builds:
       - linux
       - darwin
       - windows
+    main: ./cmd/
 
 changelog:
   filters:
