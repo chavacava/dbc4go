@@ -3,6 +3,7 @@
 # dbc4go
 
 [Design by Contract&trade;](https://en.wikipedia.org/wiki/Design_by_contract) for GO is a code generator that takes GO code annotated with contracts and generates code that enforces those contracts at runtime.  
+Contracts are embedded into comments, therefore code annotated with contracts is still valid GO code.
 
 <p align="center">
   <img src="./assets/mascots.jpg" alt="" width="300">
@@ -11,11 +12,74 @@
 </p>
 
 
-Contracts are embedded into comments, therefore code annotated with contracts is still valid GO code.
+A simple example: imagine you have a `counter` type like the following
+
+```go
+type Counter struct {
+	value int
+}
+
+// IncrementBy increments the counter value by n.
+func (c *Counter) IncrementBy(n int) {
+	c.value += n
+}
+```
+You can add a contract to the `IncrementBy` method to enforce that the resulting value of the counter is actually incremented by `n` at the end of method's execution:
+
+```go
+// IncrementBy increments the counter value by n.
+//
+// Contract:
+//   - ensures value is incremented by n: c.value == @old{c.value} + n
+func (c *Counter) IncrementBy(n int) {
+	c.value += n
+}
+```
+As is, the contract you added has no effect on your code other than better documenting it.
+But if you run `dbc4go` on the source file (let's say `counter.go`) 
+
+```
+$ dbc4go -i counter.go 
+```
+you will get the following code:
+
+```go
+type Counter struct {
+	value int
+}
+
+// Increment increments the counter value by a n.
+//
+// Contract:
+//   - ensures value is incremented by n: c.value == @old{c.value} + n
+func (c *Counter) IncrementBy(n int) {
+	{ // Open contract scope
+		// Function's contracts
+		old_1 := c.value
+		defer func() {
+			if !(c.value == old_1+n) {
+				panic("function didn't ensure value is incremented by n")
+			}
+		}()
+	} // Close contract scope
+
+	c.value += n
+}
+```
+As you can see, `dbc4go` instrumented the original code by adding a whole block of statements at the beginning of the method's body.
+The new code block implements the checking of the contract you wrote in the documentation of the method.
+Now, when the instrumented version of your code is executed, the contract will be enforced, and if the contract is not respected the method will panic.
+
+For further information on how to write contracts you can read the section [Available contract clauses](#available-contract-clauses) below and check the [examples](./examples/).
+
+You might still wonder how this can be useful for you.
+Well, one thing you can do is execute your tests on the instrumented version of your code.
+You could, for example, use `go generate` to obtain an instrumented version of your files and then run `go test`.
+Like that, tests and contracts will combine to provide you more chances to find bugs. 
 
 This project uses contracts itself! Check the source code and the `Makefile` to see how.
 
-You can also **check the [examples](./examples/)**.
+The article [Design by Contract](https://se.inf.ethz.ch/~meyer/publications/old/dbc_chapter.pdf) by Bertrand Meyer provides a complete and clear explanation of the idea. 
 
 # Usage
 
