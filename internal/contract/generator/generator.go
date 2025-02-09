@@ -352,7 +352,7 @@ func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []
 			ensure = strings.Replace(ensure, "%cond%", expr, 1)
 			contractStr := clause.Description()
 			if contractStr == "" {
-				contractStr = escapeDoubleQuotes(clause.Expression())
+				contractStr = escapeDoubleQuotes(clause.Expression().Raw)
 			}
 			ensure = strings.Replace(ensure, "%contract%", contractStr, 1)
 			ensuresCode = append(ensuresCode, ensure)
@@ -376,9 +376,9 @@ func (fileAnalyzer) generateRequiresCode(req contract.Requires, panicMsgPrefix s
 
 	contractStr := req.Description()
 	if contractStr == "" {
-		contractStr = escapeDoubleQuotes(req.Expression())
+		contractStr = escapeDoubleQuotes(req.Expression().Raw)
 	}
-	r = strings.Replace(templateRequire, "%cond%", exp, 1)
+	r = strings.Replace(templateRequire, "%cond%", exp.Raw, 1)
 	r = strings.Replace(r, "%msgPrefix%", panicMsgPrefix, 1)
 	r = strings.Replace(r, "%contract%", contractStr, 1)
 
@@ -387,7 +387,7 @@ func (fileAnalyzer) generateRequiresCode(req contract.Requires, panicMsgPrefix s
 
 func (fileAnalyzer) generateLetCode(let contract.Let) (r string) {
 	const templateLet = commentPrefix + `%decl% // %description%`
-	r = strings.Replace(templateLet, "%decl%", let.ExpandedExpression(), 1)
+	r = strings.Replace(templateLet, `%decl%`, let.ExpandedExpression().Raw, 1)
 	description := let.Description()
 	if description == "" {
 		description = " defined with @let"
@@ -400,30 +400,20 @@ func (fileAnalyzer) generateLetCode(let contract.Let) (r string) {
 // Contract:
 //   - requires len(clauses) > 0
 func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures) (r string) {
-	const templateOldVarDecl = commentPrefix + `%oldId% := %expr%`
-	const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("function didn't ensure %contract%") }`
 
 	ensuresCode := make([]string, len(clauses))
 	oldVarDecls := []string{}
 	for i, clause := range clauses {
-		shortStmt, expr, idToOld := clause.ExpandedExpression()
-		if shortStmt != "" {
-			shortStmt = shortStmt + "; "
+		switch clause.Expression().Kind {
+		case contract.ExprKindPlain:
+			code, decls := generateEnsuresCodeFromPlainExpression(clause.Expression(), clause.Description())
+			oldVarDecls = append(oldVarDecls, decls...)
+			ensuresCode[i] = code
+		case contract.ExprKindForeach:
+			code, decls := generateEnsuresCodeFromForeachExpression(clause.Expression(), clause.Description())
+			oldVarDecls = append(oldVarDecls, decls...)
+			ensuresCode[i] = code
 		}
-		for expr, oldID := range idToOld {
-			decl := strings.Replace(templateOldVarDecl, "%oldId%", oldID, 1)
-			decl = strings.Replace(decl, "%expr%", expr, 1)
-			oldVarDecls = append(oldVarDecls, decl)
-		}
-		ensure := strings.Replace(templateEnsure, "%shortStmt%", shortStmt, 1)
-		ensure = strings.Replace(ensure, "%cond%", expr, 1)
-		contractStr := clause.Description()
-		if contractStr == "" {
-			contractStr = escapeDoubleQuotes(clause.Expression())
-		}
-
-		ensure = strings.Replace(ensure, "%contract%", contractStr, 1)
-		ensuresCode[i] = ensure
 	}
 
 	r += strings.Join(oldVarDecls, "\n")
@@ -435,6 +425,48 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures) (r string
 	r += strings.Replace(templateDeferredFunction, "%checks%", strings.Join(ensuresCode, "\n"), 1)
 
 	return r
+}
+
+func generateEnsuresCodeFromPlainExpression(expression contract.Expression, description string) (code string, oldVarDecls []string) {
+	const templateOldVarDecl = commentPrefix + `%oldId% := %expr%`
+	const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("function didn't ensure %contract%") }`
+
+	shortStmt, expr, idToOld := contract.ExpandEnsuresExpression(expression)
+	if shortStmt != "" {
+		shortStmt = shortStmt + "; "
+	}
+
+	for expr, oldID := range idToOld {
+		decl := strings.Replace(templateOldVarDecl, "%oldId%", oldID, 1)
+		decl = strings.Replace(decl, "%expr%", expr, 1)
+		oldVarDecls = append(oldVarDecls, decl)
+	}
+
+	code = strings.Replace(templateEnsure, "%shortStmt%", shortStmt, 1)
+	code = strings.Replace(code, "%cond%", expr, 1)
+	contractStr := description
+	if contractStr == "" {
+		contractStr = escapeDoubleQuotes(expression.Raw)
+	}
+
+	code = strings.Replace(code, "%contract%", contractStr, 1)
+	return code, oldVarDecls
+}
+
+func generateEnsuresCodeFromForeachExpression(expression contract.Expression, description string) (code string, oldVarDecls []string) {
+	const templateForeachElement = commentPrefix + `for %variable% := range %source% { %expression% }`
+
+	variable := expression.SubExprs[contract.ExprKindPlainFieldVariables] // TODO support miltiple variables
+	source := expression.SubExprs[contract.ExprKindPlainFieldSources]     // TODO support miltiple sources
+	if description == "" {
+		description = expression.Raw
+	}
+	subExpressionCode, varDecls := generateEnsuresCodeFromPlainExpression(expression.SubExprs[contract.ExprKindPlainFieldExpression], description)
+	code = strings.Replace(templateForeachElement, "%variable%", variable.Raw, 1)
+	code = strings.Replace(code, "%source%", source.Raw, 1)
+	code = strings.Replace(code, "%expression%", subExpressionCode, 1)
+
+	return code, varDecls
 }
 
 // Contract:
