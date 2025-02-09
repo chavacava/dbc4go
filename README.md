@@ -285,10 +285,19 @@ Current limitation: `@forall` can be used only on `ensures` clauses
 
 Syntax:
 
-`ensures [_description_:] @forall` _element_id_ `@in` _collection_id_`:` _GO Boolean expression_
+`ensures [_description_:] @forall` _element_id_ (`@in`|`@indexof`) _collection_id_`:` _GO Boolean expression_
+
+While the syntax `@foreach ... @in` is to be used when ranging over elements of the collection; `@foreach ... @indexof` is to be used when iterating over the index of the collection.
+
 
 ```go
 // @ensures all returned elements are non-negative: @forall n @in squareds: n >= 0
+func square(nums []int) (squareds []int) {
+	// implementation
+}
+```
+```go
+// @ensures all returned elements are non-negative: @forall i @indexof squareds: squareds[i] >= 0
 func square(nums []int) (squareds []int) {
 	// implementation
 }
