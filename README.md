@@ -11,7 +11,6 @@ Contracts are embedded into comments, therefore code annotated with contracts is
   Logo by Eze
 </p>
 
-
 A simple example: imagine you have a `counter` type like the following
 
 ```go
@@ -264,7 +263,6 @@ Example:
 func (c *Container) Add(e string) { ... }
 ```
 
-
 ### The ==> operator
 The `==>` operator (implication) allows to write more precise and concise contracts like
 
@@ -277,6 +275,23 @@ The `==>` operator (implication) allows to write more precise and concise contra
 //   - ensures initialSpeed + delta < c.maxSpeedKmh ==> c.speed == initialSpeed + delta
 //   - ensures initialSpeed + delta >= c.maxSpeedKmh ==> c.speed == c.maxSpeedKmh 
 func (c *Car) Accelerate(delta int) { ... }
+```
+
+### The @forall operator
+
+The `@forall` operator allows to write contracts on all the elements of a collection (a `range`-able type)
+
+Current limitation: `@forall` can be used only on `ensures` clauses
+
+Syntax:
+
+`ensures [_description_:] @forall` _element_id_ `@in` _collection_id_`:` _GO Boolean expression_
+
+```go
+// @ensures all returned elements are non-negative: @forall n @in squareds: n >= 0
+func square(nums []int) (squareds []int) {
+	// implementation
+}
 ```
 
 ### Contract Syntax 
