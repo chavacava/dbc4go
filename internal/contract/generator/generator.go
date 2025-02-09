@@ -455,14 +455,26 @@ func generateEnsuresCodeFromPlainExpression(expression contract.Expression, desc
 
 func generateEnsuresCodeFromForeachExpression(expression contract.Expression, description string) (code string, oldVarDecls []string) {
 	const templateForeachElement = commentPrefix + `for %variable% := range %source% { %expression% }`
+	const templateForeachIndex = commentPrefix + `for %variable%:=0;%variable%<len(%source%);%variable%++ { %expression% }`
 
-	variable := expression.SubExprs[contract.ExprKindPlainFieldVariables] // TODO support miltiple variables
-	source := expression.SubExprs[contract.ExprKindPlainFieldSources]     // TODO support miltiple sources
+	variable := expression.SubExprs[contract.ExprKindForeachFieldVariables] // TODO support miltiple variables
+	source := expression.SubExprs[contract.ExprKindForeachFieldSources]     // TODO support miltiple sources
 	if description == "" {
 		description = expression.Raw
 	}
-	subExpressionCode, varDecls := generateEnsuresCodeFromPlainExpression(expression.SubExprs[contract.ExprKindPlainFieldExpression], description)
-	code = strings.Replace(templateForeachElement, "%variable%", variable.Raw, 1)
+	template := ""
+	forallKind := expression.SubExprs[contract.ExprKindForeachFieldKind].Raw
+	switch forallKind {
+	case contract.ForallKindIn:
+		template = templateForeachElement
+	case contract.ForallKindIndexof:
+		template = templateForeachIndex
+	default:
+		log.Panicf("Unknown @forall kind %s", forallKind)
+	}
+
+	subExpressionCode, varDecls := generateEnsuresCodeFromPlainExpression(expression.SubExprs[contract.ExprKindForeachFieldExpression], description)
+	code = strings.ReplaceAll(template, "%variable%", variable.Raw)
 	code = strings.Replace(code, "%source%", source.Raw, 1)
 	code = strings.Replace(code, "%expression%", subExpressionCode, 1)
 

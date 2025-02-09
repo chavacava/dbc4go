@@ -423,7 +423,9 @@ const (
 	ExprKindForeach ExpressionKind = 1
 )
 
-const ExprKindPlainFieldExpression = "expression"
-const ExprKindPlainFieldKind = "kind"
-const ExprKindPlainFieldSources = "sources"
-const ExprKindPlainFieldVariables = "variables"
+const ExprKindForeachFieldExpression = "expression"
+const ExprKindForeachFieldKind = "kind"
+const ExprKindForeachFieldSources = "sources"
+const ExprKindForeachFieldVariables = "variables"
+const ForallKindIn = "in"
+const ForallKindIndexof = "indexof"
