@@ -44,9 +44,9 @@ func TestParseTypeContract(t *testing.T) {
 				"// @invariant an invariant: a == a",
 			},
 			wantContract: contract.NewTypeContract(target).AddEnsures(
-				contract.NewEnsures("a == a", "an invariant"),
+				contract.NewEnsures(plainExpr("a == a"), "an invariant"),
 			).AddRequires(
-				contract.NewRequires("a == a", "an invariant"),
+				contract.NewRequires(plainExpr("a == a"), "an invariant"),
 			),
 			wantErr: nil,
 		},
@@ -57,9 +57,9 @@ func TestParseTypeContract(t *testing.T) {
 				"// @invariant a == a",
 			},
 			wantContract: contract.NewTypeContract(target).AddEnsures(
-				contract.NewEnsures("a == a", ""),
+				contract.NewEnsures(plainExpr("a == a"), ""),
 			).AddRequires(
-				contract.NewRequires("a == a", ""),
+				contract.NewRequires(plainExpr("a == a"), ""),
 			),
 			wantErr: nil,
 		},
@@ -71,9 +71,9 @@ func TestParseTypeContract(t *testing.T) {
 				"//   - invariant an invariant: a == a",
 			},
 			wantContract: contract.NewTypeContract(target).AddEnsures(
-				contract.NewEnsures("a == a", "an invariant"),
+				contract.NewEnsures(plainExpr("a == a"), "an invariant"),
 			).AddRequires(
-				contract.NewRequires("a == a", "an invariant"),
+				contract.NewRequires(plainExpr("a == a"), "an invariant"),
 			),
 			wantErr: nil,
 		},
@@ -85,9 +85,9 @@ func TestParseTypeContract(t *testing.T) {
 				"//   - invariant a == a",
 			},
 			wantContract: contract.NewTypeContract(target).AddEnsures(
-				contract.NewEnsures("a == a", ""),
+				contract.NewEnsures(plainExpr("a == a"), ""),
 			).AddRequires(
-				contract.NewRequires("a == a", ""),
+				contract.NewRequires(plainExpr("a == a"), ""),
 			),
 			wantErr: nil,
 		},
@@ -111,9 +111,9 @@ func TestParseTypeContract(t *testing.T) {
 				"//   - invariant a == a",
 			},
 			wantContract: contract.NewTypeContract(target).AddEnsures(
-				contract.NewEnsures("a == a", ""),
+				contract.NewEnsures(plainExpr("a == a"), ""),
 			).AddRequires(
-				contract.NewRequires("a == a", ""),
+				contract.NewRequires(plainExpr("a == a"), ""),
 			).AddImport("string").AddImport("math"),
 			wantErr: nil,
 		},
@@ -217,7 +217,7 @@ func TestParseFuncContract(t *testing.T) {
 			comments: []string{
 				"// @let dummy: a := false",
 			},
-			wantContract: contract.NewFuncContract().AddLet(contract.NewLet("a := false", "dummy")),
+			wantContract: contract.NewFuncContract().AddLet(contract.NewLet(plainExpr("a := false"), "dummy")),
 			wantErr:      nil,
 		},
 		{
@@ -236,7 +236,7 @@ func TestParseFuncContract(t *testing.T) {
 				"//   - requires a == a",
 			},
 			wantContract: contract.NewFuncContract().AddRequires(
-				contract.NewRequires("a == a", "")),
+				contract.NewRequires(plainExpr("a == a"), "")),
 			wantErr: nil,
 		},
 		{
@@ -258,7 +258,7 @@ func TestParseFuncContract(t *testing.T) {
 				"//   - ensures with description: b == @old{b}",
 			},
 			wantContract: contract.NewFuncContract().AddEnsures(
-				contract.NewEnsures("a == @old{a}", "")).AddEnsures(contract.NewEnsures("b == @old{b}", "with description")),
+				contract.NewEnsures(plainExpr("a == @old{a}"), "")).AddEnsures(contract.NewEnsures(plainExpr("b == @old{b}"), "with description")),
 			wantErr: nil,
 		},
 		{
@@ -268,7 +268,7 @@ func TestParseFuncContract(t *testing.T) {
 				"// @ensures with description: b == @old{b}",
 			},
 			wantContract: contract.NewFuncContract().AddEnsures(
-				contract.NewEnsures("a == @old{a}", "")).AddEnsures(contract.NewEnsures("b == @old{b}", "with description")),
+				contract.NewEnsures(plainExpr("a == @old{a}"), "")).AddEnsures(contract.NewEnsures(plainExpr("b == @old{b}"), "with description")),
 			wantErr: nil,
 		},
 		{
@@ -277,7 +277,7 @@ func TestParseFuncContract(t *testing.T) {
 				"// @unmodified a, b",
 			},
 			wantContract: contract.NewFuncContract().AddEnsures(
-				contract.NewEnsures("@old{a} == a", "a unmodified")).AddEnsures(contract.NewEnsures("@old{b} == b", "b unmodified")),
+				contract.NewEnsures(plainExpr("@old{a} == a"), "a unmodified")).AddEnsures(contract.NewEnsures(plainExpr("@old{b} == b"), "b unmodified")),
 			wantErr: nil,
 		},
 		{
@@ -323,10 +323,10 @@ func TestParseFuncContract(t *testing.T) {
 				"//    - unmodified a",
 			},
 			wantContract: contract.NewFuncContract().AddImport("a").
-				AddLet(contract.NewLet("b := true", "")).
-				AddRequires(contract.NewRequires("c != true", "dummy req")).
-				AddEnsures(contract.NewEnsures("@old(d) == d ==> false", "dummy ensures")).
-				AddEnsures(contract.NewEnsures("@old{a} == a", "a unmodified")),
+				AddLet(contract.NewLet(plainExpr("b := true"), "")).
+				AddRequires(contract.NewRequires(plainExpr("c != true"), "dummy req")).
+				AddEnsures(contract.NewEnsures(plainExpr("@old(d) == d ==> false"), "dummy ensures")).
+				AddEnsures(contract.NewEnsures(plainExpr("@old{a} == a"), "a unmodified")),
 			wantErr: nil,
 		},
 		{
@@ -340,10 +340,10 @@ func TestParseFuncContract(t *testing.T) {
 				"// @unmodified a",
 			},
 			wantContract: contract.NewFuncContract().AddImport("a").
-				AddLet(contract.NewLet("b := true", "")).
-				AddRequires(contract.NewRequires("c != true", "dummy req")).
-				AddEnsures(contract.NewEnsures("@old(d) == d ==> false", "dummy ensures")).
-				AddEnsures(contract.NewEnsures("@old{a} == a", "a unmodified")),
+				AddLet(contract.NewLet(plainExpr("b := true"), "")).
+				AddRequires(contract.NewRequires(plainExpr("c != true"), "dummy req")).
+				AddEnsures(contract.NewEnsures(plainExpr("@old(d) == d ==> false"), "dummy ensures")).
+				AddEnsures(contract.NewEnsures(plainExpr("@old{a} == a"), "a unmodified")),
 			wantErr: nil,
 		},
 		{
@@ -365,10 +365,10 @@ func TestParseFuncContract(t *testing.T) {
 				"// a",
 			},
 			wantContract: contract.NewFuncContract().AddImport("a").
-				AddLet(contract.NewLet("b :=  true", "")).
-				AddRequires(contract.NewRequires("c != true", "dummy req")).
-				AddEnsures(contract.NewEnsures("@old(d) == d  ==> false", "dummy ensures")).
-				AddEnsures(contract.NewEnsures("@old{a} == a", "a unmodified")),
+				AddLet(contract.NewLet(plainExpr("b :=  true"), "")).
+				AddRequires(contract.NewRequires(plainExpr("c != true"), "dummy req")).
+				AddEnsures(contract.NewEnsures(plainExpr("@old(d) == d  ==> false"), "dummy ensures")).
+				AddEnsures(contract.NewEnsures(plainExpr("@old{a} == a"), "a unmodified")),
 			wantErr: nil,
 		},
 	}
@@ -401,4 +401,8 @@ func commentASTFromStrings(lines []string) []*ast.Comment {
 		result = append(result, &ast.Comment{Text: line})
 	}
 	return result
+}
+
+var plainExpr = func(raw string) contract.Expression {
+	return contract.Expression{Kind: contract.ExprKindPlain, Raw: raw}
 }

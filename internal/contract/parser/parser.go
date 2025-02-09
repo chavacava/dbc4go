@@ -37,15 +37,17 @@ func NewParser() Parser {
 func (p *Parser) ParseTypeContract(typeName string, comments []*ast.Comment) (result *contract.TypeContract, err error) {
 	result = contract.NewTypeContract(typeName)
 	for canonicalLine := range p.canonicalLinesFromComments(comments) {
-		kind, description, expr, matched := p.parseLine(canonicalLine)
+		kind, description, exprStr, matched := p.parseLine(canonicalLine)
 		if !matched {
 			continue // nothing to do, there is no contract in this comment line
 		}
 
+		expr := parseExpression(exprStr)
+
 		switch kind {
 		case "invariant":
-			if contract.Re4old.MatchString(expr) {
-				return result, fmt.Errorf("@old can not be used in 'invariant' expressions: %s", expr)
+			if contract.Re4old.MatchString(exprStr) {
+				return result, fmt.Errorf("@old can not be used in 'invariant' expressions: %s", exprStr)
 			}
 
 			ensuresClause := contract.NewEnsures(expr, description) // invariants are ensures that apply to all methods of the type
@@ -56,9 +58,9 @@ func (p *Parser) ParseTypeContract(typeName string, comments []*ast.Comment) (re
 
 			result.AddRequires(requiresClause)
 		case "import":
-			result.AddImport(expr)
+			result.AddImport(expr.Raw)
 		case "ensures", "requires", "unmodified":
-			return result, fmt.Errorf("'%s' can not be used in type contracts: %s %s", kind, kind, expr)
+			return result, fmt.Errorf("'%s' can not be used in type contracts: %s %s", kind, kind, expr.Raw)
 		default:
 			return result, errors.Errorf("unknown contract kind %s", kind)
 		}
@@ -70,15 +72,16 @@ func (p *Parser) ParseTypeContract(typeName string, comments []*ast.Comment) (re
 func (p *Parser) ParseFuncContract(comments []*ast.Comment) (result *contract.FuncContract, err error) {
 	result = contract.NewFuncContract()
 	for canonicalLine := range p.canonicalLinesFromComments(comments) {
-		kind, description, expr, matched := p.parseLine(canonicalLine)
+		kind, description, exprStr, matched := p.parseLine(canonicalLine)
 		if !matched {
 			continue // nothing to do, there is no contract in this comment line
 		}
 
+		expr := parseExpression(exprStr)
 		switch kind {
 		case "requires":
-			if contract.Re4old.MatchString(expr) {
-				return result, fmt.Errorf("@old can not be used in 'requires' expressions: %s", expr)
+			if contract.Re4old.MatchString(exprStr) {
+				return result, fmt.Errorf("@old can not be used in 'requires' expressions: %s", exprStr)
 			}
 
 			clause := contract.NewRequires(expr, description)
@@ -87,12 +90,12 @@ func (p *Parser) ParseFuncContract(comments []*ast.Comment) (result *contract.Fu
 			clause := contract.NewEnsures(expr, description)
 			result.AddEnsures(clause)
 		case "import":
-			result.AddImport(expr)
+			result.AddImport(expr.Raw)
 		case "invariant":
 			return result, errors.New("can not define invariants for functions/methods")
 		case "let":
-			if contract.Re4old.MatchString(expr) {
-				return result, fmt.Errorf("@old can not be used in 'let' expressions: %s", expr)
+			if contract.Re4old.MatchString(exprStr) {
+				return result, fmt.Errorf("@old can not be used in 'let' expressions: %s", exprStr)
 			}
 
 			clause := contract.NewLet(expr, description)
@@ -114,13 +117,14 @@ func (p *Parser) ParseFuncContract(comments []*ast.Comment) (result *contract.Fu
 
 // Contract:
 //   - ensures r != nil
-func (p *Parser) parseUnmodified(expr string) (r []contract.Ensures) {
+func (p *Parser) parseUnmodified(expr contract.Expression) (r []contract.Ensures) {
 	result := []contract.Ensures{}
 
-	ids := strings.Split(expr, ",")
+	ids := strings.Split(expr.Raw, ",")
 	for _, id := range ids {
 		id := strings.TrimSpace(id)
-		expr := fmt.Sprintf("@old{%s} == %s", id, id)
+		exprStr := fmt.Sprintf("@old{%s} == %s", id, id)
+		expr.Raw = exprStr
 		description := fmt.Sprintf("%s unmodified", id)
 		newEnsure := contract.NewEnsures(expr, description)
 		result = append(result, newEnsure)
@@ -216,5 +220,29 @@ func (*Parser) canonicalLinesFromComments(comments []*ast.Comment) iter.Seq[stri
 			}
 			acc = ""
 		}
+	}
+}
+
+var reForall = regexp.MustCompile(`^@forall (?P<variables>[^@]+) @(?P<kind>indexof|in) (?P<sources>[^:]+):\s+(?P<expression>.+)$`)
+
+func parseExpression(raw string) contract.Expression {
+	matches := reForall.FindStringSubmatch(raw)
+	if matches != nil {
+		subExprs := make(map[string]contract.Expression)
+		for i, name := range reForall.SubexpNames() {
+			if i != 0 && name != "" {
+				subExprs[name] = parseExpression(matches[i])
+			}
+		}
+		return contract.Expression{
+			Kind:     contract.ExprKindForall,
+			SubExprs: subExprs,
+			Raw:      raw,
+		}
+	}
+
+	return contract.Expression{
+		Kind: contract.ExprKindPlain,
+		Raw:  raw,
 	}
 }

@@ -13,12 +13,15 @@ import (
 
 func TestDBC4GO(t *testing.T) {
 	tests := []string{
+		"forall_element_single",
+		"forall_index_single",
+		"import",
+		"invariant",
+		"let",
+		"multiline",
+		"forall_nested",
 		"old",
 		"unmodified",
-		"let",
-		"invariant",
-		"multiline",
-		"import",
 	}
 
 	tmpDir, err := os.MkdirTemp("", "testing-dbc4go")

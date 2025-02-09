@@ -217,7 +217,7 @@ func (c *FuncContract) Lets() (r []Let) {
 
 // Let models a @Let clause.
 type Let struct {
-	expr        string
+	expr        Expression
 	description string
 }
 
@@ -225,17 +225,17 @@ type Let struct {
 //
 // Contract:
 //   - requires expr != ""
-func NewLet(expr, description string) Let {
+func NewLet(expr Expression, description string) Let {
 	return Let{expr: expr, description: description}
 }
 
 // Expression yields the let expression
-func (l Let) Expression() string {
+func (l Let) Expression() Expression {
 	return l.expr
 }
 
 // ExpandedExpression yields the expanded let expression
-func (l Let) ExpandedExpression() string {
+func (l Let) ExpandedExpression() Expression {
 	return l.expr
 }
 
@@ -246,7 +246,7 @@ func (l Let) Description() string {
 
 // Requires is a @requires clause of a contract
 type Requires struct {
-	expr        string
+	expr        Expression
 	description string
 }
 
@@ -254,12 +254,12 @@ type Requires struct {
 //
 // Contract:
 //   - requires expr != ""
-func NewRequires(expr, description string) Requires {
+func NewRequires(expr Expression, description string) Requires {
 	return Requires{expr: expr, description: description}
 }
 
 // Expression yields the expression of this Requires.
-func (r Requires) Expression() (expr string) {
+func (r Requires) Expression() (expr Expression) {
 	return r.expr
 }
 
@@ -272,8 +272,17 @@ func (r Requires) Description() (description string) {
 //
 // Contract:
 //   - ensures result != ""
-func (r Requires) ExpandedExpression() (result string) {
-	return rewriteImpliesExpr(r.expr)
+func (r Requires) ExpandedExpression() (result Expression) {
+	switch r.expr.Kind {
+	case ExprKindPlain:
+		return Expression{
+			Kind:     r.expr.Kind,
+			SubExprs: r.expr.SubExprs,
+			Raw:      rewriteImpliesExpr(r.expr.Raw),
+		}
+	default:
+		panic(fmt.Sprintf("Unexpected expression kind %d", r.expr.Kind))
+	}
 }
 
 // Ensures is a @ensures clause of a contract.
@@ -281,7 +290,7 @@ func (r Requires) ExpandedExpression() (result string) {
 // Contract:
 //   - invariant Ensures.expr != ""
 type Ensures struct {
-	expr        string
+	expr        Expression
 	description string
 }
 
@@ -291,12 +300,12 @@ type Ensures struct {
 //   - requires expr != ""
 //   - ensures r.expr == expr
 //   - ensures r.description == description
-func NewEnsures(expr, description string) (r Ensures) {
+func NewEnsures(expr Expression, description string) (r Ensures) {
 	return Ensures{expr: expr, description: description}
 }
 
 // Expression yields the expression of this Ensures.
-func (r Ensures) Expression() (expr string) {
+func (r Ensures) Expression() (expr Expression) {
 	return r.expr
 }
 
@@ -311,10 +320,30 @@ func (r Ensures) Description() (description string) {
 //   - ensures expr != ""
 //   - ensures idToOldIdMap != nil
 func (r Ensures) ExpandedExpression() (shortStmt, expr string, idToOldIDMap map[string]string) {
-	expr = r.expr
+	expr = r.expr.Raw
 	shortStmt = ""
-	if strings.Contains(r.expr, ";") {
-		parts := strings.SplitN(r.expr, ";", 2)
+	if strings.Contains(expr, ";") {
+		parts := strings.SplitN(expr, ";", 2)
+		shortStmt, expr = parts[0], parts[1]
+	}
+	expr = rewriteImpliesExpr(expr)
+
+	// replace @old{id.otherId} by old_<number> in short-statement
+	shortStmt, shortStmtMappings := expandOldExpressions(shortStmt)
+	// replace @old{id.otherId} by old_<number> in expression
+	expr, exprMappings := expandOldExpressions(expr)
+	idToOldIDMap = map[string]string{}
+	maps.Copy[map[string]string, map[string]string](idToOldIDMap, shortStmtMappings)
+	maps.Copy[map[string]string, map[string]string](idToOldIDMap, exprMappings)
+
+	return shortStmt, expr, idToOldIDMap
+}
+
+func ExpandEnsuresExpression(expression Expression) (shortStmt, expr string, idToOldIDMap map[string]string) {
+	expr = expression.Raw
+	shortStmt = ""
+	if strings.Contains(expr, ";") {
+		parts := strings.SplitN(expr, ";", 2)
 		shortStmt, expr = parts[0], parts[1]
 	}
 	expr = rewriteImpliesExpr(expr)
@@ -380,3 +409,23 @@ func rewriteImpliesExpr(expr string) (result string) {
 
 	return "!(" + p + ") || (" + q + ")"
 }
+
+type ExpressionKind byte
+
+type Expression struct {
+	Kind     ExpressionKind
+	SubExprs map[string]Expression
+	Raw      string
+}
+
+const (
+	ExprKindPlain  ExpressionKind = 0
+	ExprKindForall ExpressionKind = 1
+)
+
+const ExprKindForallFieldExpression = "expression"
+const ExprKindForallFieldKind = "kind"
+const ExprKindForallFieldSources = "sources"
+const ExprKindForallFieldVariables = "variables"
+const ForallKindIn = "in"
+const ForallKindIndexof = "indexof"
