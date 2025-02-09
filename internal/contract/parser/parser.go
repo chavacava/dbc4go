@@ -60,7 +60,7 @@ func (p *Parser) ParseTypeContract(typeName string, comments []*ast.Comment) (re
 		case "import":
 			result.AddImport(expr.Raw)
 		case "ensures", "requires", "unmodified":
-			return result, fmt.Errorf("'%s' can not be used in type contracts: %s %s", kind, kind, expr)
+			return result, fmt.Errorf("'%s' can not be used in type contracts: %s %s", kind, kind, expr.Raw)
 		default:
 			return result, errors.Errorf("unknown contract kind %s", kind)
 		}
