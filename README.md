@@ -287,7 +287,7 @@ Syntax:
 
 `ensures` (_description_`:`)? `@forall` _element_id_ (`@in`|`@indexof`) _collection_id_`:` _GO Boolean expression_
 
-While the syntax `@foreach ... @in` is to be used when ranging over elements of the collection; `@foreach ... @indexof` is to be used when iterating over the index of the collection.
+While the syntax `@forall ... @in` is to be used when ranging over elements of the collection; `@forall ... @indexof` is to be used when iterating over the index of the collection.
 
 ```go
 // @ensures all returned elements are non-negative: @forall n @in squareds: n >= 0
@@ -302,7 +302,7 @@ func square(nums []int) (squareds []int) {
 }
 ```
 
-`@foreach` operators can be nested with the following syntax:
+`@forall` operators can be nested with the following syntax:
 
 `ensures` (_description_`:`)? (`@forall` _element_id_ (`@in`|`@indexof`) _collection_id_`:`)+ _GO Boolean expression_
 

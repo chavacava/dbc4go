@@ -223,19 +223,19 @@ func (*Parser) canonicalLinesFromComments(comments []*ast.Comment) iter.Seq[stri
 	}
 }
 
-var reForeach = regexp.MustCompile(`^@forall (?P<variables>[^@]+) @(?P<kind>indexof|in) (?P<sources>[^:]+):\s+(?P<expression>.+)$`)
+var reForall = regexp.MustCompile(`^@forall (?P<variables>[^@]+) @(?P<kind>indexof|in) (?P<sources>[^:]+):\s+(?P<expression>.+)$`)
 
 func parseExpression(raw string) contract.Expression {
-	matches := reForeach.FindStringSubmatch(raw)
+	matches := reForall.FindStringSubmatch(raw)
 	if matches != nil {
 		subExprs := make(map[string]contract.Expression)
-		for i, name := range reForeach.SubexpNames() {
+		for i, name := range reForall.SubexpNames() {
 			if i != 0 && name != "" {
 				subExprs[name] = parseExpression(matches[i])
 			}
 		}
 		return contract.Expression{
-			Kind:     contract.ExprKindForeach,
+			Kind:     contract.ExprKindForall,
 			SubExprs: subExprs,
 			Raw:      raw,
 		}

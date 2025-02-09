@@ -423,8 +423,8 @@ func generateEnsuresCodeFromExpression(expression contract.Expression, descripti
 	switch expression.Kind {
 	case contract.ExprKindPlain:
 		return generateEnsuresCodeFromPlainExpression(expression, description)
-	case contract.ExprKindForeach:
-		return generateEnsuresCodeFromForeachExpression(expression, description)
+	case contract.ExprKindForall:
+		return generateEnsuresCodeFromForeallExpression(expression, description)
 	default:
 		log.Panicf("Unknown expression kind %d", expression.Kind)
 	}
@@ -457,27 +457,27 @@ func generateEnsuresCodeFromPlainExpression(expression contract.Expression, desc
 	return code, oldVarDecls
 }
 
-func generateEnsuresCodeFromForeachExpression(expression contract.Expression, description string) (code string, oldVarDecls []string) {
-	const templateForeachElement = commentPrefix + `for %variable% := range %source% { %expression% }`
-	const templateForeachIndex = commentPrefix + `for %variable%:=0;%variable%<len(%source%);%variable%++ { %expression% }`
+func generateEnsuresCodeFromForeallExpression(expression contract.Expression, description string) (code string, oldVarDecls []string) {
+	const templateForallElement = commentPrefix + `for %variable% := range %source% { %expression% }`
+	const templateForallIndex = commentPrefix + `for %variable%:=0;%variable%<len(%source%);%variable%++ { %expression% }`
 
-	variable := expression.SubExprs[contract.ExprKindForeachFieldVariables] // TODO support miltiple variables
-	source := expression.SubExprs[contract.ExprKindForeachFieldSources]     // TODO support miltiple sources
+	variable := expression.SubExprs[contract.ExprKindForallFieldVariables] // TODO support miltiple variables
+	source := expression.SubExprs[contract.ExprKindForallFieldSources]     // TODO support miltiple sources
 	if description == "" {
 		description = expression.Raw
 	}
 	template := ""
-	forallKind := expression.SubExprs[contract.ExprKindForeachFieldKind].Raw
+	forallKind := expression.SubExprs[contract.ExprKindForallFieldKind].Raw
 	switch forallKind {
 	case contract.ForallKindIn:
-		template = templateForeachElement
+		template = templateForallElement
 	case contract.ForallKindIndexof:
-		template = templateForeachIndex
+		template = templateForallIndex
 	default:
 		log.Panicf("Unknown @forall kind %s", forallKind)
 	}
 
-	subExpressionCode, varDecls := generateEnsuresCodeFromExpression(expression.SubExprs[contract.ExprKindForeachFieldExpression], description)
+	subExpressionCode, varDecls := generateEnsuresCodeFromExpression(expression.SubExprs[contract.ExprKindForallFieldExpression], description)
 	code = strings.ReplaceAll(template, "%variable%", variable.Raw)
 	code = strings.Replace(code, "%source%", source.Raw, 1)
 	code = strings.Replace(code, "%expression%", subExpressionCode, 1)

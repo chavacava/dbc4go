@@ -419,13 +419,13 @@ type Expression struct {
 }
 
 const (
-	ExprKindPlain   ExpressionKind = 0
-	ExprKindForeach ExpressionKind = 1
+	ExprKindPlain  ExpressionKind = 0
+	ExprKindForall ExpressionKind = 1
 )
 
-const ExprKindForeachFieldExpression = "expression"
-const ExprKindForeachFieldKind = "kind"
-const ExprKindForeachFieldSources = "sources"
-const ExprKindForeachFieldVariables = "variables"
+const ExprKindForallFieldExpression = "expression"
+const ExprKindForallFieldKind = "kind"
+const ExprKindForallFieldSources = "sources"
+const ExprKindForallFieldVariables = "variables"
 const ForallKindIn = "in"
 const ForallKindIndexof = "indexof"
