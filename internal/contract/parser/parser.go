@@ -223,7 +223,7 @@ func (*Parser) canonicalLinesFromComments(comments []*ast.Comment) iter.Seq[stri
 	}
 }
 
-var reForeach = regexp.MustCompile(`^@forall (?P<variables>.+) @(?P<kind>indexof|in) (?P<sources>.+):\s+(?P<expression>.+)$`)
+var reForeach = regexp.MustCompile(`^@forall (?P<variables>[^@]+) @(?P<kind>indexof|in) (?P<sources>[^:]+):\s+(?P<expression>.+)$`)
 
 func parseExpression(raw string) contract.Expression {
 	matches := reForeach.FindStringSubmatch(raw)

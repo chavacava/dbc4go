@@ -19,6 +19,7 @@ func TestDBC4GO(t *testing.T) {
 		"invariant",
 		"let",
 		"multiline",
+		"foreach_nested",
 		"old",
 		"unmodified",
 	}

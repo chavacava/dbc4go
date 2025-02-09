@@ -400,20 +400,12 @@ func (fileAnalyzer) generateLetCode(let contract.Let) (r string) {
 // Contract:
 //   - requires len(clauses) > 0
 func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures) (r string) {
-
 	ensuresCode := make([]string, len(clauses))
 	oldVarDecls := []string{}
 	for i, clause := range clauses {
-		switch clause.Expression().Kind {
-		case contract.ExprKindPlain:
-			code, decls := generateEnsuresCodeFromPlainExpression(clause.Expression(), clause.Description())
-			oldVarDecls = append(oldVarDecls, decls...)
-			ensuresCode[i] = code
-		case contract.ExprKindForeach:
-			code, decls := generateEnsuresCodeFromForeachExpression(clause.Expression(), clause.Description())
-			oldVarDecls = append(oldVarDecls, decls...)
-			ensuresCode[i] = code
-		}
+		code, decls := generateEnsuresCodeFromExpression(clause.Expression(), clause.Description())
+		oldVarDecls = append(oldVarDecls, decls...)
+		ensuresCode[i] = code
 	}
 
 	r += strings.Join(oldVarDecls, "\n")
@@ -425,6 +417,18 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures) (r string
 	r += strings.Replace(templateDeferredFunction, "%checks%", strings.Join(ensuresCode, "\n"), 1)
 
 	return r
+}
+
+func generateEnsuresCodeFromExpression(expression contract.Expression, description string) (code string, oldVarDecls []string) {
+	switch expression.Kind {
+	case contract.ExprKindPlain:
+		return generateEnsuresCodeFromPlainExpression(expression, description)
+	case contract.ExprKindForeach:
+		return generateEnsuresCodeFromForeachExpression(expression, description)
+	default:
+		log.Panicf("Unknown expression kind %d", expression.Kind)
+	}
+	return
 }
 
 func generateEnsuresCodeFromPlainExpression(expression contract.Expression, description string) (code string, oldVarDecls []string) {
@@ -473,7 +477,7 @@ func generateEnsuresCodeFromForeachExpression(expression contract.Expression, de
 		log.Panicf("Unknown @forall kind %s", forallKind)
 	}
 
-	subExpressionCode, varDecls := generateEnsuresCodeFromPlainExpression(expression.SubExprs[contract.ExprKindForeachFieldExpression], description)
+	subExpressionCode, varDecls := generateEnsuresCodeFromExpression(expression.SubExprs[contract.ExprKindForeachFieldExpression], description)
 	code = strings.ReplaceAll(template, "%variable%", variable.Raw)
 	code = strings.Replace(code, "%source%", source.Raw, 1)
 	code = strings.Replace(code, "%expression%", subExpressionCode, 1)

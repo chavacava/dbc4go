@@ -98,7 +98,7 @@ Usage of dbc4go:
 
 Syntax:
 
-`requires` _GO Boolean expression_
+`requires`(_description_`:`)? _GO Boolean expression_
 
 As you can see in the example below, the _GO Boolean expression_ must be a valid GO Boolean expression as it will be used as the condition in an `if-then` statement.
 
@@ -137,7 +137,7 @@ func (c *Car) Accelerate(delta int) { ... }
 
 Syntax:
 
-`ensures` [description:] _GO Boolean expression_
+`ensures` (_description_`:`)? _GO Boolean expression_
 
 As for `ensure` clauses, the expression can make reference to any identifier available in the scope at the beginning of the annotated function (for example: function parameters, method receiver, global variables, other functions).
 
@@ -190,7 +190,7 @@ Invariants are enforced, materialized as `requires` and `ensures` clauses, on ev
 
 Syntax:
 
-`invariant` _GO Boolean expression_
+`invariant` (_description_`:`)? _GO Boolean expression_
 
 The expression can make reference to any identifier available in the scope of the struct declaration and any _private_ field identifier of the `struct` to which the invariant applies to.
 References to fields must be a selector expression of the form `<struct-name>.<field-name>` 
@@ -227,7 +227,7 @@ Enforces the function keeps unmodified the given list of expressions.
 
 Syntax:
 
-`unmodified` _expressions list_
+`unmodified` (_description_`:`)? _expressions list_
 
 Example:
 
@@ -263,7 +263,7 @@ Example:
 func (c *Container) Add(e string) { ... }
 ```
 
-### The ==> operator
+### The `==>` operator
 The `==>` operator (implication) allows to write more precise and concise contracts like
 
 ```go
@@ -277,7 +277,7 @@ The `==>` operator (implication) allows to write more precise and concise contra
 func (c *Car) Accelerate(delta int) { ... }
 ```
 
-### The @forall operator
+### The `@forall` operator
 
 The `@forall` operator allows to write contracts on all the elements of a collection (a `range`-able type)
 
@@ -285,10 +285,9 @@ Current limitation: `@forall` can be used only on `ensures` clauses
 
 Syntax:
 
-`ensures [_description_:] @forall` _element_id_ (`@in`|`@indexof`) _collection_id_`:` _GO Boolean expression_
+`ensures` (_description_`:`)? `@forall` _element_id_ (`@in`|`@indexof`) _collection_id_`:` _GO Boolean expression_
 
 While the syntax `@foreach ... @in` is to be used when ranging over elements of the collection; `@foreach ... @indexof` is to be used when iterating over the index of the collection.
-
 
 ```go
 // @ensures all returned elements are non-negative: @forall n @in squareds: n >= 0
@@ -302,6 +301,10 @@ func square(nums []int) (squareds []int) {
 	// implementation
 }
 ```
+
+`@foreach` operators can be nested with the following syntax:
+
+`ensures` (_description_`:`)? (`@forall` _element_id_ (`@in`|`@indexof`) _collection_id_`:`)+ _GO Boolean expression_
 
 ### Contract Syntax 
 
@@ -360,15 +363,15 @@ type BankAccount struct {
 
 #### Raw syntax summary
 
-`@requires` [_description_:] _GO Boolean expression_
+`@requires` (_description_`:`)? _GO Boolean expression_
 
-`@ensures` [_description_:] _GO Boolean expression_
+`@ensures` (_description_`:`)? _GO Boolean expression_
 
 `@let` _id_ `:=` _expression_
 
-`@invariant` [_description_:] _GO Boolean expression_
+`@invariant` (_description_`:`)? _GO Boolean expression_
 
-`@unmodified` _identifiers list_
+`@unmodified` (_description_`:`)? _identifiers list_
 
 `@import` _pakage name_
 
@@ -378,14 +381,14 @@ You can **check [these examples](./examples/raw_contracts/)** of code annotated 
 
 Contract clauses must respect the directive comment format as defined in the **Syntax** section of [Go Doc Comments](https://tip.golang.org/doc/comment) 
 
-`contract:requires` [_description_:] _GO Boolean expression_
+`contract:requires` (_description_`:`)? _GO Boolean expression_
 
-`contract:ensures` [_description_:] _GO Boolean expression_
+`contract:ensures` (_description_`:`)? _GO Boolean expression_
 
 `contract:let` _id_ `:=` _expression_
 
-`contract:invariant` [_description_:] _GO Boolean expression_
+`contract:invariant` (_description_`:`)? _GO Boolean expression_
 
-`contract:unmodified` _identifiers list_
+`contract:unmodified` (_description_`:`)? _identifiers list_
 
 `contract:import` _pakage name_
