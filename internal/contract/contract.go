@@ -421,11 +421,16 @@ type Expression struct {
 const (
 	ExprKindPlain  ExpressionKind = 0
 	ExprKindForall ExpressionKind = 1
+	ExprKindExists ExpressionKind = 2
 )
 
 const ExprKindForallFieldExpression = "expression"
 const ExprKindForallFieldKind = "kind"
 const ExprKindForallFieldSources = "sources"
 const ExprKindForallFieldVariables = "variables"
+const ExprKindExistsFieldExpression = "expression"
+const ExprKindExistsFieldKind = "kind"
+const ExprKindExistsFieldSources = "sources"
+const ExprKindExistsFieldVariables = "variables"
 const ForallKindIn = "in"
 const ForallKindIndexof = "indexof"
