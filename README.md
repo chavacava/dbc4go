@@ -290,13 +290,19 @@ Syntax:
 While the syntax `@forall ... @in` is to be used when ranging over elements of the collection; `@forall ... @indexof` is to be used when iterating over the index of the collection.
 
 ```go
-// @ensures all returned elements are non-negative: @forall n @in squareds: n >= 0
+// square returs the square of the given integers
+//
+// Contract:
+//   - ensures all returned elements are non-negative: @forall n @in squareds: n >= 0
 func square(nums []int) (squareds []int) {
 	// implementation
 }
 ```
 ```go
-// @ensures @forall i @indexof nums: squareds[i] == nums[i] * nums[i]
+// square returs the square of the given integers
+//
+// Contract:
+//   - ensures @forall i @indexof nums: squareds[i] == nums[i] * nums[i]
 func square(nums []int) (squareds []int) {
 	// implementation
 }
@@ -312,7 +318,7 @@ Syntax:
 
 `ensures` (_description_`:`)? `@exists` _element_id_ (`@in`|`@indexof`) _collection_id_`:` _GO Boolean expression_
 
-As with `@forall`, the syntax `@exists ... @in` is to be used when ranging over elements of the collection; `@forall ... @indexof` is to be used when iterating over the index of the collection.
+As with `@forall`, the syntax `@exists ... @in` is to be used when ranging over elements of the collection; `@exists ... @indexof` is to be used when iterating over the index of the collection.
 
 `@forall` and `@exists` operators can be nested with the following syntax:
 
