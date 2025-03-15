@@ -6,10 +6,17 @@ func square(a []int) (r []int) {
 	{ // Open contract scope
 		// Function's contracts
 		defer func() {
-			for i := 0; i < len(r); i++ {
-				if !(r[i] > 0) {
-					panic("function didn't ensure all returned elements are positive")
+			cond := func() bool {
+				for i := 0; i < len(r); i++ {
+					cond := func() bool { return r[i] > 0 }
+					if !cond() {
+						return false
+					}
 				}
+				return true
+			}
+			if !cond() {
+				panic("function didn't ensure @forall i @indexof r: r[i] > 0")
 			}
 		}()
 	} // Close contract scope
@@ -22,10 +29,17 @@ func foo(a []int) (r []int) {
 	{ // Open contract scope
 		// Function's contracts
 		defer func() {
-			for k := 0; k < len(r); k++ {
-				if !(!(r[k] > 0) || (e%2 == 0)) {
-					panic("function didn't ensure @forall k @indexof r: r[k] > 0 ==> e % 2 == 0")
+			cond := func() bool {
+				for k := 0; k < len(r); k++ {
+					cond := func() bool { return !(r[k] > 0) || (e%2 == 0) }
+					if !cond() {
+						return false
+					}
 				}
+				return true
+			}
+			if !cond() {
+				panic("function didn't ensure @forall k @indexof r: r[k] > 0 ==> e % 2 == 0")
 			}
 		}()
 	} // Close contract scope

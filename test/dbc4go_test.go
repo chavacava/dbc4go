@@ -13,13 +13,15 @@ import (
 
 func TestDBC4GO(t *testing.T) {
 	tests := []string{
+		"exist_element_single",
 		"forall_element_single",
+		"exist_forall_nested",
 		"forall_index_single",
+		"forall_nested",
 		"import",
 		"invariant",
 		"let",
 		"multiline",
-		"forall_nested",
 		"old",
 		"unmodified",
 	}

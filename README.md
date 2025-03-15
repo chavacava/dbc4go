@@ -296,15 +296,27 @@ func square(nums []int) (squareds []int) {
 }
 ```
 ```go
-// @ensures all returned elements are non-negative: @forall i @indexof squareds: squareds[i] >= 0
+// @ensures @forall i @indexof nums: squareds[i] == nums[i] * nums[i]
 func square(nums []int) (squareds []int) {
 	// implementation
 }
 ```
 
-`@forall` operators can be nested with the following syntax:
+### The `@exists` operator
 
-`ensures` (_description_`:`)? (`@forall` _element_id_ (`@in`|`@indexof`) _collection_id_`:`)+ _GO Boolean expression_
+The `@exists` operator allows to write contracts on the elements of a collection (a `range`-able type)
+
+Current limitation: `@exists` can be used only on `ensures` clauses
+
+Syntax:
+
+`ensures` (_description_`:`)? `@exists` _element_id_ (`@in`|`@indexof`) _collection_id_`:` _GO Boolean expression_
+
+As with `@forall`, the syntax `@exists ... @in` is to be used when ranging over elements of the collection; `@forall ... @indexof` is to be used when iterating over the index of the collection.
+
+`@forall` and `@exists` operators can be nested with the following syntax:
+
+`ensures` (_description_`:`)? ((`@forall`|`@exists`) _element_id_ (`@in`|`@indexof`) _collection_id_`:`)+ _GO Boolean expression_
 
 ### Contract Syntax 
 
