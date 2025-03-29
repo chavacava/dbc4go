@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/chavacava/dbc4go/internal/contract/generator"
+	"github.com/chavacava/dbc4go/internal/generator"
 )
 
 func main() {

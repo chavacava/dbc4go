@@ -273,16 +273,7 @@ func (r Requires) Description() (description string) {
 // Contract:
 //   - ensures result != ""
 func (r Requires) ExpandedExpression() (result Expression) {
-	switch r.expr.Kind {
-	case ExprKindPlain:
-		return Expression{
-			Kind:     r.expr.Kind,
-			SubExprs: r.expr.SubExprs,
-			Raw:      rewriteImpliesExpr(r.expr.Raw),
-		}
-	default:
-		panic(fmt.Sprintf("Unexpected expression kind %d", r.expr.Kind))
-	}
+	return r.Expression()
 }
 
 // Ensures is a @ensures clause of a contract.
@@ -326,7 +317,7 @@ func (r Ensures) ExpandedExpression() (shortStmt, expr string, idToOldIDMap map[
 		parts := strings.SplitN(expr, ";", 2)
 		shortStmt, expr = parts[0], parts[1]
 	}
-	expr = rewriteImpliesExpr(expr)
+	// expr = rewriteImpliesExpr(expr)
 
 	// replace @old{id.otherId} by old_<number> in short-statement
 	shortStmt, shortStmtMappings := expandOldExpressions(shortStmt)
@@ -346,7 +337,6 @@ func ExpandEnsuresExpression(expression Expression) (shortStmt, expr string, idT
 		parts := strings.SplitN(expr, ";", 2)
 		shortStmt, expr = parts[0], parts[1]
 	}
-	expr = rewriteImpliesExpr(expr)
 
 	// replace @old{id.otherId} by old_<number> in short-statement
 	shortStmt, shortStmtMappings := expandOldExpressions(shortStmt)
@@ -389,48 +379,6 @@ func oldID() (r string) {
 	return fmt.Sprintf("old_%d", OldCounter)
 }
 
-var reImplies = regexp.MustCompile(`(.*)==>(.*)`)
-
-// rewriteImpliesExpr transforms p ==> q into its canonical form !p || q.
-//
-// Contract:
-//   - import strings
-//   - let mustRewrite == strings.Contains(expr,"==>")
-//   - ensures !mustRewrite ==> result == expr
-//   - ensures mustRewrite ==> result != expr
-func rewriteImpliesExpr(expr string) (result string) {
-	impExp := reImplies.FindAllStringSubmatch(expr, -1)
-	if impExp == nil {
-		return expr // no ==> operator in the expression, nothing to do
-	}
-
-	p := strings.Trim(impExp[0][1], " ")
-	q := strings.Trim(impExp[0][2], " ")
-
-	return "!(" + p + ") || (" + q + ")"
-}
-
-type ExpressionKind byte
-
 type Expression struct {
-	Kind     ExpressionKind
-	SubExprs map[string]Expression
-	Raw      string
+	Raw string
 }
-
-const (
-	ExprKindPlain  ExpressionKind = 0
-	ExprKindForall ExpressionKind = 1
-	ExprKindExists ExpressionKind = 2
-)
-
-const ExprKindForallFieldExpression = "expression"
-const ExprKindForallFieldKind = "kind"
-const ExprKindForallFieldSources = "sources"
-const ExprKindForallFieldVariables = "variables"
-const ExprKindExistsFieldExpression = "expression"
-const ExprKindExistsFieldKind = "kind"
-const ExprKindExistsFieldSources = "sources"
-const ExprKindExistsFieldVariables = "variables"
-const ForallKindIn = "in"
-const ForallKindIndexof = "indexof"
