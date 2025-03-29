@@ -340,28 +340,8 @@ func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []
 	}
 
 	// Generate ensures for invariants
-	if len(c.Ensures()) != 0 {
-		const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("(type invariant) function didn't ensure %contract%") }`
-		clauses := c.Ensures()
-		ensuresCode := make([]string, len(clauses))
-		for _, clause := range clauses {
-			shortStmt, expr, _ := clause.ExpandedExpression()
-			if shortStmt != "" {
-				shortStmt = shortStmt + "; "
-			}
-			ensure := strings.Replace(templateEnsure, "%shortStmt%", shortStmt, 1)
-			ensure = strings.Replace(ensure, "%cond%", contractgen.Generate(expr), 1)
-			contractStr := clause.Description()
-			if contractStr == "" {
-				contractStr = escapeDoubleQuotes(clause.Expression().Raw)
-			}
-			ensure = strings.Replace(ensure, "%contract%", contractStr, 1)
-			ensuresCode = append(ensuresCode, ensure)
-		}
-		const templateDeferredFunction = commentPrefix + `defer func(){%checks%}()`
-		r := strings.Replace(templateDeferredFunction, "%checks%", strings.Join(ensuresCode, "\n"), 1)
-		result = append(result, r)
-	}
+	ensuresCode := fa.generateEnsuresCode(c.Ensures())
+	result = append(result, ensuresCode)
 
 	// merge new imports into imports list
 	for k, v := range c.Imports() {
@@ -432,9 +412,7 @@ func generateEnsuresCodeFromExpression(expression contract.Expression, descripti
 		decl = strings.Replace(decl, "%expr%", expr, 1)
 		oldVarDecls = append(oldVarDecls, decl)
 	}
-	println("<<<<<<<<<<<", expr, ">>>>>>>>>")
 	generatedCode := contractgen.Generate(expr)
-	println(">>>>>>>>>", generatedCode, "<<<<<<<<<<<")
 	code = strings.Replace(templateEnsure, "%shortStmt%", shortStmt, 1)
 	code = strings.Replace(code, "%cond%", generatedCode, 1)
 	contractStr := description
