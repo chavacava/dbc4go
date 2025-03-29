@@ -400,7 +400,7 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures) (r string
 
 func generateEnsuresCodeFromExpression(expression contract.Expression, description string) (code string, oldVarDecls []string) {
 	const templateOldVarDecl = commentPrefix + `%oldId% := %expr%`
-	const templateEnsure = commentPrefix + `{%cond% ; if !cond() { panic("FUNCTION didn't satisfied %contract%") };}`
+	const templateEnsure = commentPrefix + `{%cond% ; if !cond() { panic("function didn't satisfied %contract%") };}`
 
 	shortStmt, expr, idToOld := contract.ExpandEnsuresExpression(expression)
 	if shortStmt != "" {
