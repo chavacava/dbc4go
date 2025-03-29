@@ -281,13 +281,11 @@ func (c *Car) Accelerate(delta int) { ... }
 
 The `@forall` operator allows to write contracts on all the elements of a collection (a `range`-able type)
 
-Current limitation: `@forall` can be used only on `ensures` clauses
-
 Syntax:
 
 `ensures` (_description_`:`)? `@forall` _element_id_ (`@in`|`@indexof`) _collection_id_`:` _GO Boolean expression_
 
-While the syntax `@forall ... @in` is to be used when ranging over elements of the collection; `@forall ... @indexof` is to be used when iterating over the index of the collection.
+While the syntax `@forall ... @in` is to be used when ranging over elements of the collection; `@forall ... @indexof` is to be used when iterating with an index over the collection.
 
 ```go
 // square returs the square of the given integers
@@ -312,13 +310,11 @@ func square(nums []int) (squareds []int) {
 
 The `@exists` operator allows to write contracts on the elements of a collection (a `range`-able type)
 
-Current limitation: `@exists` can be used only on `ensures` clauses
-
 Syntax:
 
 `ensures` (_description_`:`)? `@exists` _element_id_ (`@in`|`@indexof`) _collection_id_`:` _GO Boolean expression_
 
-As with `@forall`, the syntax `@exists ... @in` is to be used when ranging over elements of the collection; `@exists ... @indexof` is to be used when iterating over the index of the collection.
+As with `@forall`, the syntax `@exists ... @in` is to be used when ranging over elements of the collection; `@exists ... @indexof` is to be used when iterating with an index over the collection.
 
 `@forall` and `@exists` operators can be nested with the following syntax:
 
