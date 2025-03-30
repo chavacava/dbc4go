@@ -75,3 +75,7 @@ func (v *BaseClauseExpressionVisitor) VisitSliceIndex(ctx *SliceIndexContext) in
 func (v *BaseClauseExpressionVisitor) VisitNumber(ctx *NumberContext) interface{} {
 	return v.VisitChildren(ctx)
 }
+
+func (v *BaseClauseExpressionVisitor) VisitString(ctx *StringContext) interface{} {
+	return v.VisitChildren(ctx)
+}

@@ -59,6 +59,9 @@ type ClauseExpressionListener interface {
 	// EnterNumber is called when entering the number production.
 	EnterNumber(c *NumberContext)
 
+	// EnterString is called when entering the string production.
+	EnterString(c *StringContext)
+
 	// ExitRoot is called when exiting the root production.
 	ExitRoot(c *RootContext)
 
@@ -109,4 +112,7 @@ type ClauseExpressionListener interface {
 
 	// ExitNumber is called when exiting the number production.
 	ExitNumber(c *NumberContext)
+
+	// ExitString is called when exiting the string production.
+	ExitString(c *StringContext)
 }

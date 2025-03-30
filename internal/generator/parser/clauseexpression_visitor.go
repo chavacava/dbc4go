@@ -58,4 +58,7 @@ type ClauseExpressionVisitor interface {
 
 	// Visit a parse tree produced by ClauseExpressionParser#number.
 	VisitNumber(ctx *NumberContext) interface{}
+
+	// Visit a parse tree produced by ClauseExpressionParser#string.
+	VisitString(ctx *StringContext) interface{}
 }

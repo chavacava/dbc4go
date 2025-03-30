@@ -123,3 +123,9 @@ func (s *BaseClauseExpressionListener) EnterNumber(ctx *NumberContext) {}
 
 // ExitNumber is called when production number is exited.
 func (s *BaseClauseExpressionListener) ExitNumber(ctx *NumberContext) {}
+
+// EnterString is called when production string is entered.
+func (s *BaseClauseExpressionListener) EnterString(ctx *StringContext) {}
+
+// ExitString is called when production string is exited.
+func (s *BaseClauseExpressionListener) ExitString(ctx *StringContext) {}
