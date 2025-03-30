@@ -7,8 +7,11 @@ func old1(a any) {
 		// Function's contracts
 		old_1 := a
 		defer func() {
-			if !(old_1 == a) {
-				panic("function didn't ensure @old{a} == a")
+			{
+				cond := func() bool { return old_1 == a }
+				if !cond() {
+					panic("function didn't satisfy @old{a} == a")
+				}
 			}
 		}()
 	} // Close contract scope
@@ -21,8 +24,11 @@ func old2(a any) {
 		// Function's contracts
 		old_1 := a.b
 		defer func() {
-			if !(old_1 == a) {
-				panic("function didn't ensure @old{a.b} == a")
+			{
+				cond := func() bool { return old_1 == a }
+				if !cond() {
+					panic("function didn't satisfy @old{a.b} == a")
+				}
 			}
 		}()
 	} // Close contract scope
@@ -35,8 +41,11 @@ func old3(a any) {
 		// Function's contracts
 		old_1 := a.b + 1
 		defer func() {
-			if !(old_1 == a) {
-				panic("function didn't ensure @old{a.b + 1} == a")
+			{
+				cond := func() bool { return old_1 == a }
+				if !cond() {
+					panic("function didn't satisfy @old{a.b + 1} == a")
+				}
 			}
 		}()
 	} // Close contract scope
@@ -49,8 +58,15 @@ func old4(a any) {
 		// Function's contracts
 		old_1 := a.b
 		defer func() {
-			if !(!(a == 0) || (old_1)) {
-				panic("function didn't ensure a == 0 ==> @old{a.b}")
+			{
+				cond := func() bool {
+					cond1 := func() bool { return a == 0 }
+					cond2 := func() bool { return old_1 }
+					return !cond1() || cond2()
+				}
+				if !cond() {
+					panic("function didn't satisfy a == 0 ==> @old{a.b}")
+				}
 			}
 		}()
 	} // Close contract scope

@@ -9,12 +9,18 @@ type foo struct {
 func (f foo) f() {
 	{ // Open contract scope
 		// Type invariants
-		if !(a > 0) {
-			panic("(type invariant) function caller didn't satisfied a > 0")
+		{
+			cond := func() bool { return a > 0 }
+			if !cond() {
+				panic("(type invariant) function caller didn't satisfy a > 0")
+			}
 		}
 		defer func() {
-			if !(a > 0) {
-				panic("(type invariant) function didn't ensure a > 0")
+			{
+				cond := func() bool { return a > 0 }
+				if !cond() {
+					panic("function didn't satisfy a > 0")
+				}
 			}
 		}()
 	} // Close contract scope
@@ -29,12 +35,18 @@ type bar struct {
 func (b bar) b() {
 	{ // Open contract scope
 		// Type invariants
-		if !(b != "") {
-			panic("(type invariant) function caller didn't satisfied b != \"\"")
+		{
+			cond := func() bool { return b != "" }
+			if !cond() {
+				panic("(type invariant) function caller didn't satisfy b != \"\"")
+			}
 		}
 		defer func() {
-			if !(b != "") {
-				panic("(type invariant) function didn't ensure b != \"\"")
+			{
+				cond := func() bool { return b != "" }
+				if !cond() {
+					panic("function didn't satisfy b != \"\"")
+				}
 			}
 		}()
 	} // Close contract scope

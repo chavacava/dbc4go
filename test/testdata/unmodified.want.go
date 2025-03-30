@@ -14,11 +14,17 @@ func (s S) unmodified1(a int, b int) (r int) {
 		old_1 := x
 		old_2 := s.a
 		defer func() {
-			if !(old_1 == x) {
-				panic("function didn't ensure x unmodified")
+			{
+				cond := func() bool { return old_1 == x }
+				if !cond() {
+					panic("function didn't satisfy x unmodified")
+				}
 			}
-			if !(old_2 == s.a) {
-				panic("function didn't ensure s.a unmodified")
+			{
+				cond := func() bool { return old_2 == s.a }
+				if !cond() {
+					panic("function didn't satisfy s.a unmodified")
+				}
 			}
 		}()
 	} // Close contract scope
@@ -34,11 +40,17 @@ func (s S) unmodified2(a int, b int) (r int) {
 		old_1 := x
 		old_2 := s.a
 		defer func() {
-			if !(old_1 == x) {
-				panic("function didn't ensure x unmodified")
+			{
+				cond := func() bool { return old_1 == x }
+				if !cond() {
+					panic("function didn't satisfy x unmodified")
+				}
 			}
-			if !(old_2 == s.a) {
-				panic("function didn't ensure s.a unmodified")
+			{
+				cond := func() bool { return old_2 == s.a }
+				if !cond() {
+					panic("function didn't satisfy s.a unmodified")
+				}
 			}
 		}()
 	} // Close contract scope

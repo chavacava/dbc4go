@@ -8,8 +8,11 @@ import "strings"
 func importFoo(a string) {
 	{ // Open contract scope
 		// Function's contracts
-		if !(strings.Contains(a, ":")) {
-			panic("function caller didn't satisfied strings.Contains(a,\":\")")
+		{
+			cond := func() bool { return strings.Contains(a, ":") }
+			if !cond() {
+				panic("function caller didn't satisfy strings.Contains(a,\":\")")
+			}
 		}
 	} // Close contract scope
 }

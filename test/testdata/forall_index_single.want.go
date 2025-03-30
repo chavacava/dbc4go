@@ -6,17 +6,19 @@ func square(a []int) (r []int) {
 	{ // Open contract scope
 		// Function's contracts
 		defer func() {
-			cond := func() bool {
-				for i := 0; i < len(r); i++ {
-					cond := func() bool { return r[i] > 0 }
-					if !cond() {
-						return false
+			{
+				cond := func() bool {
+					for i, _ := range r {
+						cond := func() bool { return r[i] > 0 }
+						if !cond() {
+							return false
+						}
 					}
+					return true
 				}
-				return true
-			}
-			if !cond() {
-				panic("function didn't ensure @forall i @indexof r: r[i] > 0")
+				if !cond() {
+					panic("function didn't satisfy all returned elements are positive")
+				}
 			}
 		}()
 	} // Close contract scope
@@ -29,17 +31,23 @@ func foo(a []int) (r []int) {
 	{ // Open contract scope
 		// Function's contracts
 		defer func() {
-			cond := func() bool {
-				for k := 0; k < len(r); k++ {
-					cond := func() bool { return !(r[k] > 0) || (e%2 == 0) }
-					if !cond() {
-						return false
+			{
+				cond := func() bool {
+					for k, _ := range r {
+						cond := func() bool {
+							cond1 := func() bool { return r[k] > 0 }
+							cond2 := func() bool { return e%2 == 0 }
+							return !cond1() || cond2()
+						}
+						if !cond() {
+							return false
+						}
 					}
+					return true
 				}
-				return true
-			}
-			if !cond() {
-				panic("function didn't ensure @forall k @indexof r: r[k] > 0 ==> e % 2 == 0")
+				if !cond() {
+					panic("function didn't satisfy @forall k @indexof r: r[k] > 0 ==> e % 2 == 0")
+				}
 			}
 		}()
 	} // Close contract scope

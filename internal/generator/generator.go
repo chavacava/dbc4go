@@ -352,7 +352,7 @@ func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []
 }
 
 func (fileAnalyzer) generateRequiresCode(req contract.Requires, panicMsgPrefix string) (r string) {
-	const templateRequire = commentPrefix + `{%cond%;if !cond() { panic("%msgPrefix%function caller didn't satisfied %contract%") }};`
+	const templateRequire = commentPrefix + `{%cond%;if !cond() { panic("%msgPrefix%function caller didn't satisfy %contract%") }};`
 	exp := req.ExpandedExpression()
 
 	contractStr := req.Description()
@@ -400,7 +400,7 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures) (r string
 
 func generateEnsuresCodeFromExpression(expression contract.Expression, description string) (code string, oldVarDecls []string) {
 	const templateOldVarDecl = commentPrefix + `%oldId% := %expr%`
-	const templateEnsure = commentPrefix + `{%cond% ; if !cond() { panic("function didn't satisfied %contract%") };}`
+	const templateEnsure = commentPrefix + `{%cond% ; if !cond() { panic("function didn't satisfy %contract%") };}`
 
 	shortStmt, expr, idToOld := contract.ExpandEnsuresExpression(expression)
 	if shortStmt != "" {

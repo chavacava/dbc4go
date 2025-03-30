@@ -22,8 +22,8 @@ func TestConstructor(t *testing.T) {
 }
 
 func TestAddRequires(t *testing.T) {
-	sampleReq1 := NewRequires(Expression{Kind: ExprKindPlain, Raw: "1"}, "")
-	sampleReq2 := NewRequires(Expression{Kind: ExprKindPlain, Raw: "2"}, "")
+	sampleReq1 := NewRequires(Expression{Raw: "1"}, "")
+	sampleReq2 := NewRequires(Expression{Raw: "2"}, "")
 	tests := []struct {
 		requires Requires
 		want     []Requires
@@ -86,8 +86,8 @@ func TestAddImports(t *testing.T) {
 }
 
 func TestAddLets(t *testing.T) {
-	sampleLet1 := NewLet(Expression{Kind: ExprKindPlain, Raw: "expr1"}, "descr1")
-	sampleLet2 := NewLet(Expression{Kind: ExprKindPlain, Raw: "expr2"}, "descr2")
+	sampleLet1 := NewLet(Expression{Raw: "expr1"}, "descr1")
+	sampleLet2 := NewLet(Expression{Raw: "expr2"}, "descr2")
 	tests := []struct {
 		let  Let
 		want []Let
@@ -119,7 +119,7 @@ func TestAddLets(t *testing.T) {
 func TestLetGetters(t *testing.T) {
 	expr := "expr"
 	descr := "descr"
-	let := NewLet(Expression{Kind: ExprKindPlain, Raw: expr}, descr)
+	let := NewLet(Expression{Raw: expr}, descr)
 
 	assert.Equal(t, expr, let.Expression().Raw)
 	assert.Equal(t, expr, let.ExpandedExpression().Raw)
@@ -127,8 +127,8 @@ func TestLetGetters(t *testing.T) {
 }
 
 func TestRequires(t *testing.T) {
-	sampleReq1 := NewRequires(Expression{Kind: ExprKindPlain, Raw: "1"}, "")
-	sampleReq2 := NewRequires(Expression{Kind: ExprKindPlain, Raw: "2"}, "")
+	sampleReq1 := NewRequires(Expression{Raw: "1"}, "")
+	sampleReq2 := NewRequires(Expression{Raw: "2"}, "")
 	tests := []struct {
 		requires []Requires
 	}{
@@ -153,8 +153,8 @@ func TestRequires(t *testing.T) {
 }
 
 func TestAddEnsures(t *testing.T) {
-	sampleEns1 := NewEnsures(Expression{Kind: ExprKindPlain, Raw: "1"}, "")
-	sampleEns2 := NewEnsures(Expression{Kind: ExprKindPlain, Raw: "2"}, "")
+	sampleEns1 := NewEnsures(Expression{Raw: "1"}, "")
+	sampleEns2 := NewEnsures(Expression{Raw: "2"}, "")
 	tests := []struct {
 		ensures Ensures
 		want    []Ensures
@@ -183,8 +183,8 @@ func TestAddEnsures(t *testing.T) {
 }
 
 func TestEnsures(t *testing.T) {
-	sampleEns1 := NewEnsures(Expression{Kind: ExprKindPlain, Raw: "1"}, "")
-	sampleEns2 := NewEnsures(Expression{Kind: ExprKindPlain, Raw: "2"}, "")
+	sampleEns1 := NewEnsures(Expression{Raw: "1"}, "")
+	sampleEns2 := NewEnsures(Expression{Raw: "2"}, "")
 	tests := []struct {
 		ensures []Ensures
 	}{
@@ -231,16 +231,16 @@ func TestRequiresExpandedExpr(t *testing.T) {
 		},
 		{
 			expr:         "p ==> q",
-			expandedExpr: "!(p) || (q)",
+			expandedExpr: "p ==> q",
 		},
 		{
 			expr:         "a == b ==> b == c",
-			expandedExpr: "!(a == b) || (b == c)",
+			expandedExpr: "a == b ==> b == c",
 		},
 	}
 
 	for _, tc := range tests {
-		r := Requires{expr: Expression{Kind: ExprKindPlain, Raw: tc.expr}}
+		r := Requires{expr: Expression{Raw: tc.expr}}
 		assert.Equal(t, tc.expandedExpr, r.ExpandedExpression().Raw)
 	}
 }
@@ -268,20 +268,20 @@ func TestEnsuresExpandedExpr(t *testing.T) {
 		},
 		{
 			expr:         "p ==> q",
-			expandedExpr: "!(p) || (q)",
+			expandedExpr: "p ==> q",
 		},
 		{
 			expr:         "a == b ==> b == c",
-			expandedExpr: "!(a == b) || (b == c)",
+			expandedExpr: "a == b ==> b == c",
 		},
 		{
 			expr:         "a == b ==> b == @old{c}",
-			expandedExpr: "!(a == b) || (b == old_1)",
+			expandedExpr: "a == b ==> b == old_1",
 		},
 	}
 
 	for _, tc := range tests {
-		e := Ensures{expr: Expression{Kind: ExprKindPlain, Raw: tc.expr}}
+		e := Ensures{expr: Expression{Raw: tc.expr}}
 		_, got, _ := e.ExpandedExpression()
 		assert.Equal(t, tc.expandedExpr, got)
 	}

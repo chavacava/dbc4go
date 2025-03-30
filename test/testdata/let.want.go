@@ -8,8 +8,11 @@ func letRaw() {
 		// Function's contracts
 		foo := 1 //  defined with @let
 		defer func() {
-			if !(foo == 1) {
-				panic("function didn't ensure foo == 1")
+			{
+				cond := func() bool { return foo == 1 }
+				if !cond() {
+					panic("function didn't satisfy foo == 1")
+				}
 			}
 		}()
 	} // Close contract scope
@@ -23,8 +26,11 @@ func letStandard() {
 		// Function's contracts
 		foo := 1 //  defined with @let
 		defer func() {
-			if !(foo == 1) {
-				panic("function didn't ensure foo == 1")
+			{
+				cond := func() bool { return foo == 1 }
+				if !cond() {
+					panic("function didn't satisfy foo == 1")
+				}
 			}
 		}()
 	} // Close contract scope

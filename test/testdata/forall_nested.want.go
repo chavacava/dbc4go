@@ -6,12 +6,16 @@ func sort(a []int) (r []int) {
 	{ // Open contract scope
 		// Function's contracts
 		defer func() {
-			cond := func() bool {
-				for i := 0; i < len(r); i++ {
-					cond := func() bool {
+			{
+				cond := func() bool {
+					for i, _ := range r {
 						cond := func() bool {
-							for j := 0; j < len(r); j++ {
-								cond := func() bool { return !(i <= j) || (r[i] <= r[j]) }
+							for j, _ := range r {
+								cond := func() bool {
+									cond1 := func() bool { return i <= j }
+									cond2 := func() bool { return r[i] <= r[j] }
+									return !cond1() || cond2()
+								}
 								if !cond() {
 									return false
 								}
@@ -21,16 +25,12 @@ func sort(a []int) (r []int) {
 						if !cond() {
 							return false
 						}
-						return true
 					}
-					if !cond() {
-						return false
-					}
+					return true
 				}
-				return true
-			}
-			if !cond() {
-				panic("function didn't ensure @forall i @indexof r: @forall j @indexof r: i <= j ==> r[i] <= r[j]")
+				if !cond() {
+					panic("function didn't satisfy result is sorted")
+				}
 			}
 		}()
 	} // Close contract scope
@@ -43,12 +43,16 @@ func deduplicate(a []int) (r []int) {
 	{ // Open contract scope
 		// Function's contracts
 		defer func() {
-			cond := func() bool {
-				for i := 0; i < len(r); i++ {
-					cond := func() bool {
+			{
+				cond := func() bool {
+					for i, _ := range r {
 						cond := func() bool {
-							for j := 0; j < len(r); j++ {
-								cond := func() bool { return !(i != j) || (r[i] != r[j]) }
+							for j, _ := range r {
+								cond := func() bool {
+									cond1 := func() bool { return i != j }
+									cond2 := func() bool { return r[i] != r[j] }
+									return !cond1() || cond2()
+								}
 								if !cond() {
 									return false
 								}
@@ -58,16 +62,12 @@ func deduplicate(a []int) (r []int) {
 						if !cond() {
 							return false
 						}
-						return true
 					}
-					if !cond() {
-						return false
-					}
+					return true
 				}
-				return true
-			}
-			if !cond() {
-				panic("function didn't ensure @forall i @indexof r: @forall j @indexof r: i != j ==> r[i] != r[j]")
+				if !cond() {
+					panic("function didn't satisfy @forall i @indexof r: @forall j @indexof r: i != j ==> r[i] != r[j]")
+				}
 			}
 		}()
 	} // Close contract scope
