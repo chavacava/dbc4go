@@ -223,42 +223,8 @@ func (*Parser) canonicalLinesFromComments(comments []*ast.Comment) iter.Seq[stri
 	}
 }
 
-var reForall = regexp.MustCompile(`^@forall (?P<` + contract.ExprKindForallFieldVariables + `>[^@]+) @(?P<` + contract.ExprKindForallFieldKind + `>indexof|in) (?P<` + contract.ExprKindForallFieldSources + `>[^:]+):\s+(?P<` + contract.ExprKindForallFieldExpression + `>.+)$`)
-var reExists = regexp.MustCompile(`^@exists (?P<` + contract.ExprKindExistsFieldVariables + `>[^@]+) @(?P<` + contract.ExprKindExistsFieldKind + `>indexof|in) (?P<` + contract.ExprKindExistsFieldSources + `>[^:]+):\s+(?P<` + contract.ExprKindExistsFieldExpression + `>.+)$`)
-
 func parseExpression(raw string) contract.Expression {
-	matches := reForall.FindStringSubmatch(raw)
-	if matches != nil {
-		subExprs := make(map[string]contract.Expression)
-		for i, name := range reForall.SubexpNames() {
-			if i != 0 && name != "" {
-				subExprs[name] = parseExpression(matches[i])
-			}
-		}
-		return contract.Expression{
-			Kind:     contract.ExprKindForall,
-			SubExprs: subExprs,
-			Raw:      raw,
-		}
-	}
-
-	matches = reExists.FindStringSubmatch(raw)
-	if matches != nil {
-		subExprs := make(map[string]contract.Expression)
-		for i, name := range reForall.SubexpNames() {
-			if i != 0 && name != "" {
-				subExprs[name] = parseExpression(matches[i])
-			}
-		}
-		return contract.Expression{
-			Kind:     contract.ExprKindExists,
-			SubExprs: subExprs,
-			Raw:      raw,
-		}
-	}
-
 	return contract.Expression{
-		Kind: contract.ExprKindPlain,
-		Raw:  raw,
+		Raw: raw,
 	}
 }

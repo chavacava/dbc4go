@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/chavacava/dbc4go/internal/contract/generator"
+	"github.com/chavacava/dbc4go/internal/generator"
 )
 
 func TestDBC4GO(t *testing.T) {

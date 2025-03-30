@@ -80,6 +80,9 @@ This project uses contracts itself! Check the source code and the `Makefile` to 
 
 The article [Design by Contract](https://se.inf.ethz.ch/~meyer/publications/old/dbc_chapter.pdf) by Bertrand Meyer provides a complete and clear explanation of the idea. 
 
+# Install
+Just grab the executable corresponding to your platform from the releases page (here on the right ----> )
+
 # Usage
 
 ```
@@ -263,8 +266,8 @@ Example:
 func (c *Container) Add(e string) { ... }
 ```
 
-### The `==>` operator
-The `==>` operator (implication) allows to write more precise and concise contracts like
+### The `==>` and `<==>` operators
+The `==>` (implication) and `<==>` (double implication) allow to write more precise and concise contracts like
 
 ```go
 // Accelerate the car.
@@ -281,13 +284,11 @@ func (c *Car) Accelerate(delta int) { ... }
 
 The `@forall` operator allows to write contracts on all the elements of a collection (a `range`-able type)
 
-Current limitation: `@forall` can be used only on `ensures` clauses
-
 Syntax:
 
-`ensures` (_description_`:`)? `@forall` _element_id_ (`@in`|`@indexof`) _collection_id_`:` _GO Boolean expression_
+`@forall` _element_id_ (`@in`|`@indexof`|`@iterating`) _collection_id_`:` _GO Boolean expression_
 
-While the syntax `@forall ... @in` is to be used when ranging over elements of the collection; `@forall ... @indexof` is to be used when iterating over the index of the collection.
+While the syntax `@forall ... @in` shall be used when ranging over elements of the collection; `@forall ... @indexof` shall be used when iterating with an index over the collection and `@iterating` must be used when ranging through an [iterator functions](https://pkg.go.dev/iter#hdr-Iterators).
 
 ```go
 // square returs the square of the given integers
@@ -312,17 +313,15 @@ func square(nums []int) (squareds []int) {
 
 The `@exists` operator allows to write contracts on the elements of a collection (a `range`-able type)
 
-Current limitation: `@exists` can be used only on `ensures` clauses
-
 Syntax:
 
-`ensures` (_description_`:`)? `@exists` _element_id_ (`@in`|`@indexof`) _collection_id_`:` _GO Boolean expression_
+`@exists` _element_id_ (`@in`|`@indexof`|`@iterating`) _collection_id_`:` _GO Boolean expression_
 
-As with `@forall`, the syntax `@exists ... @in` is to be used when ranging over elements of the collection; `@exists ... @indexof` is to be used when iterating over the index of the collection.
+Choosing between `@in`, `@indexof` and `@iterating`  follows the same rules as within the `@forall` operator.
 
 `@forall` and `@exists` operators can be nested with the following syntax:
 
-`ensures` (_description_`:`)? ((`@forall`|`@exists`) _element_id_ (`@in`|`@indexof`) _collection_id_`:`)+ _GO Boolean expression_
+((`@forall`|`@exists`) _element_id_ (`@in`|`@indexof`) _collection_id_`:`)+ _GO Boolean expression_
 
 ### Contract Syntax 
 

@@ -18,6 +18,7 @@ import (
 
 	"github.com/chavacava/dbc4go/internal/contract"
 	contractParser "github.com/chavacava/dbc4go/internal/contract/parser"
+	contractgen "github.com/chavacava/dbc4go/internal/generator/contract"
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
 	"golang.org/x/tools/go/ast/astutil"
@@ -339,28 +340,8 @@ func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []
 	}
 
 	// Generate ensures for invariants
-	if len(c.Ensures()) != 0 {
-		const templateEnsure = commentPrefix + `if %shortStmt%!(%cond%) { panic("(type invariant) function didn't ensure %contract%") }`
-		clauses := c.Ensures()
-		ensuresCode := make([]string, len(clauses))
-		for _, clause := range clauses {
-			shortStmt, expr, _ := clause.ExpandedExpression()
-			if shortStmt != "" {
-				shortStmt = shortStmt + "; "
-			}
-			ensure := strings.Replace(templateEnsure, "%shortStmt%", shortStmt, 1)
-			ensure = strings.Replace(ensure, "%cond%", expr, 1)
-			contractStr := clause.Description()
-			if contractStr == "" {
-				contractStr = escapeDoubleQuotes(clause.Expression().Raw)
-			}
-			ensure = strings.Replace(ensure, "%contract%", contractStr, 1)
-			ensuresCode = append(ensuresCode, ensure)
-		}
-		const templateDeferredFunction = commentPrefix + `defer func(){%checks%}()`
-		r := strings.Replace(templateDeferredFunction, "%checks%", strings.Join(ensuresCode, "\n"), 1)
-		result = append(result, r)
-	}
+	ensuresCode := fa.generateEnsuresCode(c.Ensures())
+	result = append(result, ensuresCode)
 
 	// merge new imports into imports list
 	for k, v := range c.Imports() {
@@ -371,14 +352,14 @@ func (fa fileAnalyzer) generateInvariantCode(c *contract.TypeContract) (stmts []
 }
 
 func (fileAnalyzer) generateRequiresCode(req contract.Requires, panicMsgPrefix string) (r string) {
-	const templateRequire = commentPrefix + `if !(%cond%) { panic("%msgPrefix%function caller didn't satisfied %contract%") }`
+	const templateRequire = commentPrefix + `{%cond%;if !cond() { panic("%msgPrefix%function caller didn't satisfy %contract%") }};`
 	exp := req.ExpandedExpression()
 
 	contractStr := req.Description()
 	if contractStr == "" {
 		contractStr = escapeDoubleQuotes(req.Expression().Raw)
 	}
-	r = strings.Replace(templateRequire, "%cond%", exp.Raw, 1)
+	r = strings.Replace(templateRequire, "%cond%", contractgen.Generate(exp.Raw), 1)
 	r = strings.Replace(r, "%msgPrefix%", panicMsgPrefix, 1)
 	r = strings.Replace(r, "%contract%", contractStr, 1)
 
@@ -401,7 +382,7 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures) (r string
 	ensuresCode := make([]string, len(clauses))
 	oldVarDecls := []string{}
 	for i, clause := range clauses {
-		code, decls := generateEnsuresCodeFromExpression(clause.Expression(), clause.Description(), true)
+		code, decls := generateEnsuresCodeFromExpression(clause.Expression(), clause.Description())
 		oldVarDecls = append(oldVarDecls, decls...)
 		ensuresCode[i] = code
 	}
@@ -417,27 +398,9 @@ func (fa fileAnalyzer) generateEnsuresCode(clauses []contract.Ensures) (r string
 	return r
 }
 
-func generateEnsuresCodeFromExpression(expression contract.Expression, description string, isRootExpression bool) (code string, oldVarDecls []string) {
-	switch expression.Kind {
-	case contract.ExprKindPlain:
-		return generateEnsuresCodeFromPlainExpression(expression, description, isRootExpression)
-	case contract.ExprKindForall:
-		return generateEnsuresCodeFromForallExpression(expression, description, isRootExpression)
-	case contract.ExprKindExists:
-		return generateEnsuresCodeFromExistsExpression(expression, description, isRootExpression)
-	default:
-		log.Panicf("Unknown expression kind %d", expression.Kind)
-	}
-	return
-}
-
-func generateEnsuresCodeFromPlainExpression(expression contract.Expression, description string, isRootExpression bool) (code string, oldVarDecls []string) {
+func generateEnsuresCodeFromExpression(expression contract.Expression, description string) (code string, oldVarDecls []string) {
 	const templateOldVarDecl = commentPrefix + `%oldId% := %expr%`
-	templateEnsure := templateRootPlainExpression
-	if !isRootExpression {
-		templateEnsure = strings.ReplaceAll(templateLeafPlainExpression, "\n", " ")
-	}
-	templateEnsure = commentPrefix + templateEnsure
+	const templateEnsure = commentPrefix + `{%cond% ; if !cond() { panic("function didn't satisfy %contract%") };}`
 
 	shortStmt, expr, idToOld := contract.ExpandEnsuresExpression(expression)
 	if shortStmt != "" {
@@ -449,9 +412,9 @@ func generateEnsuresCodeFromPlainExpression(expression contract.Expression, desc
 		decl = strings.Replace(decl, "%expr%", expr, 1)
 		oldVarDecls = append(oldVarDecls, decl)
 	}
-
+	generatedCode := contractgen.Generate(expr)
 	code = strings.Replace(templateEnsure, "%shortStmt%", shortStmt, 1)
-	code = strings.Replace(code, "%cond%", expr, 1)
+	code = strings.Replace(code, "%cond%", generatedCode, 1)
 	contractStr := description
 	if contractStr == "" {
 		contractStr = escapeDoubleQuotes(expression.Raw)
@@ -459,85 +422,6 @@ func generateEnsuresCodeFromPlainExpression(expression contract.Expression, desc
 
 	code = strings.Replace(code, "%contract%", contractStr, 1)
 	return code, oldVarDecls
-}
-
-func generateEnsuresCodeFromForallExpression(expression contract.Expression, description string, isRootExpression bool) (code string, oldVarDecls []string) {
-	//const templateForallElement = commentPrefix + `for %variable% := range %source% { %expression% }`
-	//const templateForallIndex = commentPrefix + `for %variable%:=0;%variable%<len(%source%);%variable%++ { %expression% }`
-
-	variable := expression.SubExprs[contract.ExprKindForallFieldVariables]
-	source := expression.SubExprs[contract.ExprKindForallFieldSources]
-	if description == "" {
-		description = expression.Raw
-	}
-
-	rangeOrIteration := ""
-	forallKind := expression.SubExprs[contract.ExprKindForallFieldKind].Raw
-	switch forallKind {
-	case contract.ForallKindIn:
-		rangeOrIteration = "%variable% := range %source%"
-	case contract.ForallKindIndexof:
-		rangeOrIteration = "%variable%:=0;%variable%<len(%source%);%variable%++"
-	default:
-		log.Panicf("Unknown @forall kind %s", forallKind)
-	}
-
-	subExpressionCode, varDecls := generateEnsuresCodeFromExpression(expression.SubExprs[contract.ExprKindForallFieldExpression], description, false)
-	template := commentPrefix + strings.ReplaceAll(templateForallExpression, "\n", " ")
-	code = strings.ReplaceAll(template, "%rangeOrIteration%", rangeOrIteration)
-	code = strings.ReplaceAll(code, "%variable%", variable.Raw)
-	code = strings.ReplaceAll(code, "%source%", source.Raw)
-	code = strings.Replace(code, "%subexpression%", subExpressionCode, 1)
-
-	action := `panic("function didn't ensure %contract%")`
-	alternativeAction := ""
-	if !isRootExpression {
-		action = "return false"
-		alternativeAction = "return true"
-	}
-	code = strings.Replace(code, "%action%", action, 1)
-	code = strings.Replace(code, "%alternativeAction%", alternativeAction, 1)
-	code = strings.Replace(code, "%contract%", expression.Raw, 1)
-
-	return code, varDecls
-}
-
-func generateEnsuresCodeFromExistsExpression(expression contract.Expression, description string, isRootExpression bool) (code string, oldVarDecls []string) {
-	variable := expression.SubExprs[contract.ExprKindExistsFieldVariables]
-	source := expression.SubExprs[contract.ExprKindExistsFieldSources]
-	if description == "" {
-		description = expression.Raw
-	}
-
-	rangeOrIteration := ""
-	existKind := expression.SubExprs[contract.ExprKindExistsFieldKind].Raw
-	switch existKind {
-	case contract.ForallKindIn:
-		rangeOrIteration = "%variable% := range %source%"
-	case contract.ForallKindIndexof:
-		rangeOrIteration = "%variable%:=0;%variable%<len(%source%);%variable%++"
-	default:
-		log.Panicf("Unknown @exist kind %s", existKind)
-	}
-
-	subExpressionCode, varDecls := generateEnsuresCodeFromExpression(expression.SubExprs[contract.ExprKindForallFieldExpression], description, false)
-	template := commentPrefix + strings.ReplaceAll(templateExistsExpression, "\n", " ")
-	code = strings.ReplaceAll(template, "%rangeOrIteration%", rangeOrIteration)
-	code = strings.ReplaceAll(code, "%variable%", variable.Raw)
-	code = strings.ReplaceAll(code, "%source%", source.Raw)
-	code = strings.Replace(code, "%subexpression%", subExpressionCode, 1)
-
-	action := `panic("function didn't ensure %contract%")`
-	alternativeAction := ""
-	if !isRootExpression {
-		action = "return false"
-		alternativeAction = "return true"
-	}
-	code = strings.Replace(code, "%action%", action, 1)
-	code = strings.Replace(code, "%alternativeAction%", alternativeAction, 1)
-	code = strings.Replace(code, "%contract%", expression.Raw, 1)
-
-	return code, varDecls
 }
 
 // Contract:
@@ -555,41 +439,3 @@ func (fa fileAnalyzer) typeAsString(n ast.Node) (r string) {
 func escapeDoubleQuotes(str string) (r string) {
 	return strings.Replace(str, "\"", "\\\"", -1)
 }
-
-const templateRootPlainExpression = `if %shortStmt%!(%cond%) { panic("function didn't ensure %contract%") }`
-const templateLeafPlainExpression = `
-return %cond%`
-
-const templateForallExpression = `
-cond:= func() bool {
-	for %rangeOrIteration% {
-		cond := func() bool {
-			%subexpression%
-		};
-		if !cond() {
-			return false
-		}		
-	};
-	return true
-};
-if !cond() {
-	%action%
-};
-%alternativeAction%`
-
-const templateExistsExpression = `
-cond:= func() bool {
-	for %rangeOrIteration% {
-		cond := func() bool {
-			%subexpression%
-		};
-		if cond() {
-			return true
-		}		
-	};
-	return false
-};
-if !cond() {
-	%action%
-};
-%alternativeAction%`

@@ -6,11 +6,11 @@ func foo(a []int) (r, g []int) {
 	{ // Open contract scope
 		// Function's contracts
 		defer func() {
-			cond := func() bool {
-				for e := range r {
-					cond := func() bool {
+			{
+				cond := func() bool {
+					for _, e := range r {
 						cond := func() bool {
-							for i := 0; i < len(g); i++ {
+							for i, _ := range g {
 								cond := func() bool { return e > g[i] }
 								if cond() {
 									return true
@@ -21,16 +21,12 @@ func foo(a []int) (r, g []int) {
 						if !cond() {
 							return false
 						}
-						return true
 					}
-					if !cond() {
-						return false
-					}
+					return true
 				}
-				return true
-			}
-			if !cond() {
-				panic("function didn't ensure @forall e @in r: @exists i @indexof g: e > g[i]")
+				if !cond() {
+					panic("function didn't satisfy something")
+				}
 			}
 		}()
 	} // Close contract scope

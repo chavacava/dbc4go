@@ -8,12 +8,18 @@ type multilineType struct{}
 func (m multilineType) foo() {
 	{ // Open contract scope
 		// Type invariants
-		if !(true == true) {
-			panic("(type invariant) function caller didn't satisfied dummy invariant")
+		{
+			cond := func() bool { return true == true }
+			if !cond() {
+				panic("(type invariant) function caller didn't satisfy dummy invariant")
+			}
 		}
 		defer func() {
-			if !(true == true) {
-				panic("(type invariant) function didn't ensure dummy invariant")
+			{
+				cond := func() bool { return true == true }
+				if !cond() {
+					panic("function didn't satisfy dummy invariant")
+				}
 			}
 		}()
 	} // Close contract scope
@@ -27,12 +33,18 @@ type multilineType2 struct{}
 func (m multilineType2) foo() {
 	{ // Open contract scope
 		// Type invariants
-		if !(true == true) {
-			panic("(type invariant) function caller didn't satisfied dummy invariant")
+		{
+			cond := func() bool { return true == true }
+			if !cond() {
+				panic("(type invariant) function caller didn't satisfy dummy invariant")
+			}
 		}
 		defer func() {
-			if !(true == true) {
-				panic("(type invariant) function didn't ensure dummy invariant")
+			{
+				cond := func() bool { return true == true }
+				if !cond() {
+					panic("function didn't satisfy dummy invariant")
+				}
 			}
 		}()
 	} // Close contract scope
@@ -44,8 +56,11 @@ func (m multilineType2) foo() {
 func multilineRaw() {
 	{ // Open contract scope
 		// Function's contracts
-		if !(true == true) {
-			panic("function caller didn't satisfied dummy requirement")
+		{
+			cond := func() bool { return true == true }
+			if !cond() {
+				panic("function caller didn't satisfy dummy requirement")
+			}
 		}
 	} // Close contract scope
 
@@ -58,8 +73,11 @@ func multilineStandard() {
 	{ // Open contract scope
 		// Function's contracts
 		defer func() {
-			if !(true == false) {
-				panic("function didn't ensure dummy clause")
+			{
+				cond := func() bool { return true == false }
+				if !cond() {
+					panic("function didn't satisfy dummy clause")
+				}
 			}
 		}()
 	} // Close contract scope
