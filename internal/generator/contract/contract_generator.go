@@ -39,6 +39,15 @@ func (g *contractGenerator) ExitImplies(ctx *parser.ImpliesContext) {
 	g.stack.Push(expr)
 }
 
+func (g *contractGenerator) ExitIff(ctx *parser.IffContext) {
+	right, _ := g.stack.Pop()
+	left, _ := g.stack.Pop()
+	rightR := strings.Replace(right.(string), "cond", "cond2", 1)
+	leftR := strings.Replace(left.(string), "cond", "cond1", 1)
+	expr := fmt.Sprintf("cond:= func() bool {%s;%s;return (!cond1() || cond2()) && (!cond2() || cond1())};", leftR, rightR)
+	g.stack.Push(expr)
+}
+
 // ExitForallElement is called when production ForallElement is exited.
 func (g *contractGenerator) ExitForallElement(ctx *parser.ForallElementContext) {
 	expr, _ := g.stack.Pop()
@@ -56,6 +65,14 @@ func (g *contractGenerator) ExitForallIndex(ctx *parser.ForallIndexContext) {
 	g.stack.Push(cond)
 }
 
+func (g *contractGenerator) ExitForallIterator(ctx *parser.ForallIteratorContext) {
+	expr, _ := g.stack.Pop()
+	collection, _ := g.stack.Pop()
+	index, _ := g.stack.Pop()
+	cond := fmt.Sprintf("cond := func() bool {for %s := range %s {%sif !cond() {return false}}; return true};", index, collection, expr)
+	g.stack.Push(cond)
+}
+
 func (g *contractGenerator) ExitExistsElement(ctx *parser.ExistsElementContext) {
 	expr, _ := g.stack.Pop()
 	collection, _ := g.stack.Pop()
@@ -69,6 +86,14 @@ func (g *contractGenerator) ExitExistsIndex(ctx *parser.ExistsIndexContext) {
 	collection, _ := g.stack.Pop()
 	index, _ := g.stack.Pop()
 	cond := fmt.Sprintf("cond := func() bool {for %s,_ := range %s {%sif cond() {return true}}; return false};", index, collection, expr)
+	g.stack.Push(cond)
+}
+
+func (g *contractGenerator) ExitExistsIterator(ctx *parser.ExistsIteratorContext) {
+	expr, _ := g.stack.Pop()
+	collection, _ := g.stack.Pop()
+	index, _ := g.stack.Pop()
+	cond := fmt.Sprintf("cond := func() bool {for %s := range %s {%sif cond() {return true}}; return false};", index, collection, expr)
 	g.stack.Push(cond)
 }
 

@@ -57,6 +57,12 @@ func (s *BaseClauseExpressionListener) EnterPlainGoExpression(ctx *PlainGoExpres
 // ExitPlainGoExpression is called when production PlainGoExpression is exited.
 func (s *BaseClauseExpressionListener) ExitPlainGoExpression(ctx *PlainGoExpressionContext) {}
 
+// EnterIff is called when production Iff is entered.
+func (s *BaseClauseExpressionListener) EnterIff(ctx *IffContext) {}
+
+// ExitIff is called when production Iff is exited.
+func (s *BaseClauseExpressionListener) ExitIff(ctx *IffContext) {}
+
 // EnterForallIndex is called when production ForallIndex is entered.
 func (s *BaseClauseExpressionListener) EnterForallIndex(ctx *ForallIndexContext) {}
 
@@ -68,6 +74,18 @@ func (s *BaseClauseExpressionListener) EnterForallElement(ctx *ForallElementCont
 
 // ExitForallElement is called when production ForallElement is exited.
 func (s *BaseClauseExpressionListener) ExitForallElement(ctx *ForallElementContext) {}
+
+// EnterExistsIterator is called when production ExistsIterator is entered.
+func (s *BaseClauseExpressionListener) EnterExistsIterator(ctx *ExistsIteratorContext) {}
+
+// ExitExistsIterator is called when production ExistsIterator is exited.
+func (s *BaseClauseExpressionListener) ExitExistsIterator(ctx *ExistsIteratorContext) {}
+
+// EnterForallIterator is called when production ForallIterator is entered.
+func (s *BaseClauseExpressionListener) EnterForallIterator(ctx *ForallIteratorContext) {}
+
+// ExitForallIterator is called when production ForallIterator is exited.
+func (s *BaseClauseExpressionListener) ExitForallIterator(ctx *ForallIteratorContext) {}
 
 // EnterIterator is called when production iterator is entered.
 func (s *BaseClauseExpressionListener) EnterIterator(ctx *IteratorContext) {}

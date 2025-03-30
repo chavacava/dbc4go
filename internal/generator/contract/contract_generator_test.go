@@ -54,12 +54,24 @@ func TestGenerator(t *testing.T) {
 			want:  "cond := func() bool {for i,_ := range elements {cond := func() bool {return elements[i]==false};if !cond() {return false}}; return true};",
 		},
 		{
+			input: "@forall i @iterating elements: elements[i] == false",
+			want:  "cond := func() bool {for i := range elements {cond := func() bool {return elements[i]==false};if !cond() {return false}}; return true};",
+		},
+		{
 			input: "@exists i @indexof elements: elements[i] == false",
 			want:  "cond := func() bool {for i,_ := range elements {cond := func() bool {return elements[i]==false};if cond() {return true}}; return false};",
 		},
 		{
 			input: "@exists e @in elements: e == call(something+1,slice[i])",
 			want:  "cond := func() bool {for _,e := range elements {cond := func() bool {return e==call(something+1,slice[i])};if cond() {return true}}; return false};",
+		},
+		{
+			input: "@exists e @iterating elements: e == call(something+1,slice[i])",
+			want:  "cond := func() bool {for e := range elements {cond := func() bool {return e==call(something+1,slice[i])};if cond() {return true}}; return false};",
+		},
+		{
+			input: "p <==> q",
+			want:  "cond:= func() bool {cond1 := func() bool {return p};;cond2 := func() bool {return q};;return (!cond1() || cond2()) && (!cond2() || cond1())};",
 		},
 	}
 

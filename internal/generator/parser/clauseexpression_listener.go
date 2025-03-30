@@ -26,11 +26,20 @@ type ClauseExpressionListener interface {
 	// EnterPlainGoExpression is called when entering the PlainGoExpression production.
 	EnterPlainGoExpression(c *PlainGoExpressionContext)
 
+	// EnterIff is called when entering the Iff production.
+	EnterIff(c *IffContext)
+
 	// EnterForallIndex is called when entering the ForallIndex production.
 	EnterForallIndex(c *ForallIndexContext)
 
 	// EnterForallElement is called when entering the ForallElement production.
 	EnterForallElement(c *ForallElementContext)
+
+	// EnterExistsIterator is called when entering the ExistsIterator production.
+	EnterExistsIterator(c *ExistsIteratorContext)
+
+	// EnterForallIterator is called when entering the ForallIterator production.
+	EnterForallIterator(c *ForallIteratorContext)
 
 	// EnterIterator is called when entering the iterator production.
 	EnterIterator(c *IteratorContext)
@@ -80,11 +89,20 @@ type ClauseExpressionListener interface {
 	// ExitPlainGoExpression is called when exiting the PlainGoExpression production.
 	ExitPlainGoExpression(c *PlainGoExpressionContext)
 
+	// ExitIff is called when exiting the Iff production.
+	ExitIff(c *IffContext)
+
 	// ExitForallIndex is called when exiting the ForallIndex production.
 	ExitForallIndex(c *ForallIndexContext)
 
 	// ExitForallElement is called when exiting the ForallElement production.
 	ExitForallElement(c *ForallElementContext)
+
+	// ExitExistsIterator is called when exiting the ExistsIterator production.
+	ExitExistsIterator(c *ExistsIteratorContext)
+
+	// ExitForallIterator is called when exiting the ForallIterator production.
+	ExitForallIterator(c *ForallIteratorContext)
 
 	// ExitIterator is called when exiting the iterator production.
 	ExitIterator(c *IteratorContext)

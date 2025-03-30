@@ -5,8 +5,10 @@ grammar ClauseExpression;
 FORALL                  : '@forall';
 EXISTS                  : '@exists';
 IMPLIES                 : '==>';
+IFF                     : '<==>';
 IN                      : '@in';
 INDEXOF                 : '@indexof';
+ITERATING               : '@iterating';
 DOT                     : '.';
 WHITESPACE              : [ \r\n\t]+ -> skip;
 ID                      :  LETTER (LETTER|[0-9])*; 
@@ -22,8 +24,10 @@ root
 
 clauseExpression
    : clauseExpression IMPLIES clauseExpression # Implies
+   | clauseExpression IFF clauseExpression # Iff
    | FORALL iterator IN collection ':' clauseExpression # ForallElement
    | FORALL iterator INDEXOF collection ':' clauseExpression # ForallIndex
+   | FORALL iterator ITERATING collection ':' clauseExpression # ForallIterator
    | EXISTS iterator IN collection ':' clauseExpression # ExistsElement
    | EXISTS iterator INDEXOF collection ':' clauseExpression # ExistsIndex
    | completeGoExpression # PlainGoExpression
@@ -48,7 +52,7 @@ goExpression
 
 primaryExpression
     : '!' primaryExpression
-    | '(' goExpression ')'
+    | '(' clauseExpression ')'
     | number
     | string
     | qualifiedIdentifier (functionCallArguments | sliceIndex )?

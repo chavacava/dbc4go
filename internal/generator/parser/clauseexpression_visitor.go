@@ -26,11 +26,20 @@ type ClauseExpressionVisitor interface {
 	// Visit a parse tree produced by ClauseExpressionParser#PlainGoExpression.
 	VisitPlainGoExpression(ctx *PlainGoExpressionContext) interface{}
 
+	// Visit a parse tree produced by ClauseExpressionParser#Iff.
+	VisitIff(ctx *IffContext) interface{}
+
 	// Visit a parse tree produced by ClauseExpressionParser#ForallIndex.
 	VisitForallIndex(ctx *ForallIndexContext) interface{}
 
 	// Visit a parse tree produced by ClauseExpressionParser#ForallElement.
 	VisitForallElement(ctx *ForallElementContext) interface{}
+
+	// Visit a parse tree produced by ClauseExpressionParser#ExistsIterator.
+	VisitExistsIterator(ctx *ExistsIteratorContext) interface{}
+
+	// Visit a parse tree produced by ClauseExpressionParser#ForallIterator.
+	VisitForallIterator(ctx *ForallIteratorContext) interface{}
 
 	// Visit a parse tree produced by ClauseExpressionParser#iterator.
 	VisitIterator(ctx *IteratorContext) interface{}

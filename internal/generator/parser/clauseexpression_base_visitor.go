@@ -32,11 +32,23 @@ func (v *BaseClauseExpressionVisitor) VisitPlainGoExpression(ctx *PlainGoExpress
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseClauseExpressionVisitor) VisitIff(ctx *IffContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseClauseExpressionVisitor) VisitForallIndex(ctx *ForallIndexContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
 func (v *BaseClauseExpressionVisitor) VisitForallElement(ctx *ForallElementContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseClauseExpressionVisitor) VisitExistsIterator(ctx *ExistsIteratorContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseClauseExpressionVisitor) VisitForallIterator(ctx *ForallIteratorContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
