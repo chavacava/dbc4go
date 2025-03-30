@@ -3,3 +3,4 @@
 *.log
 deleteme*.*
 .antlr
+.vscode/settings.json
