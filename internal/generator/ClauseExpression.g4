@@ -35,7 +35,7 @@ iterator
     ;
 
 collection
-    : ID
+    : qualifiedIdentifier (functionCallArguments | sliceIndex )?
     ;
 
 completeGoExpression
